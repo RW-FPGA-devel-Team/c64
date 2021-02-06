@@ -181,6 +181,19 @@ component sigma_delta_dac port
 end component sigma_delta_dac;
 
 
+component LPFilter is 
+generic
+ ( clkspeed   : integer := 2500000;
+   filterfreq : integer := 1590
+ );
+port
+ (
+    inSound   : in  std_logic_vector(14 downto 0);
+    outSound  : out std_logic_vector(14 downto 0);
+    clk       : std_logic
+ );
+end component;
+
 --------------------------
 -- cartridge - LCA mar17 -
 --------------------------
@@ -437,6 +450,9 @@ end component cartridge;
 	
 	signal audio_data_l : std_logic_vector(17 downto 0);
 	signal audio_data_r : std_logic_vector(17 downto 0);
+	signal audio_data_f_l : std_logic_vector(14 downto 0);
+	signal audio_data_f_r : std_logic_vector(14 downto 0);
+
 	signal audio_data_l_mix : std_logic_vector(17 downto 0);
 
 	signal cass_motor  : std_logic;
@@ -989,11 +1005,27 @@ begin
 	                    audio_data_l + ((not (not cass_read or cass_write)) & "00000000000000");
 --	                    (cass_read & "00000000000000000");
 
+lpf_l: LPFilter
+port map(
+              clk      => CLOCK_27,
+              inSound  =>audio_data_l_mix (17 downto 3),
+              outSound => audio_data_f_l
+);
+
+lpf_r: LPFilter
+
+port map(
+              clk      => CLOCK_27,
+              inSound  =>audio_data_r (17 downto 3),
+              outSound => audio_data_f_r
+);
+
+
 	dac : sigma_delta_dac
 	port map (
 		clk => clk_c64,
-		ldatasum => audio_data_l_mix(17 downto 3),
-		rdatasum => audio_data_r(17 downto 3),
+		ldatasum => audio_data_f_l,
+		rdatasum => audio_data_f_r,
 		aleft => AUDIO_L,
 		aright => AUDIO_R
 	);

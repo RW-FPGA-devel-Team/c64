@@ -41,7 +41,7 @@
 # ========================
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "21:40:24  MAY 17, 2014"
-set_global_assignment -name LAST_QUARTUS_VERSION 13.1
+set_global_assignment -name LAST_QUARTUS_VERSION "13.1 SP4.26"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name FLOW_ENABLE_IO_ASSIGNMENT_ANALYSIS ON
@@ -349,9 +349,6 @@ set_location_assignment PLL_1 -to pll|altpll_component|auto_generated|pll1
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to UART_TX
 
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to UART_RX
-set_global_assignment -name VERILOG_FILE rtl/misc/LPFilter.v
-set_global_assignment -name VHDL_FILE rtl/fpga64_rgbcolor_pal.vhd
-set_global_assignment -name VHDL_FILE rtl/fpga64_rgbcolor_ntsc.vhd
 set_global_assignment -name VHDL_FILE build_id.vhd
 set_global_assignment -name VHDL_FILE rtl/tap_fifo.vhd
 set_global_assignment -name VHDL_FILE rtl/c1530.vhd
@@ -362,6 +359,7 @@ set_global_assignment -name VERILOG_FILE rtl/sid8580/sid8580.v
 set_global_assignment -name VHDL_FILE rtl/fpga64_sid_iec.vhd
 set_global_assignment -name VHDL_FILE rtl/video_vicII_656x_e.vhd
 set_global_assignment -name VHDL_FILE rtl/video_vicII_656x_a.vhd
+set_global_assignment -name VHDL_FILE rtl/fpga64_rgbcolor.vhd
 set_global_assignment -name VHDL_FILE rtl/fpga64_keyboard_matrix_mark_mcdougall.vhd
 set_global_assignment -name VHDL_FILE rtl/fpga64_buslogic_roms_mmu.vhd
 set_global_assignment -name VERILOG_FILE rtl/mos6526.v

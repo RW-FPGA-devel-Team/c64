@@ -19,18 +19,18 @@ use IEEE.numeric_std.all;
 
 -- -----------------------------------------------------------------------
 
-entity fpga64_rgbcolor is
+entity fpga64_rgbcolor_ntsc is
 	port (
 		index: in unsigned(3 downto 0);
 		r: out unsigned(7 downto 0);
 		g: out unsigned(7 downto 0);
 		b: out unsigned(7 downto 0)
 	);
-end fpga64_rgbcolor;
+end fpga64_rgbcolor_ntsc;
 
 -- -----------------------------------------------------------------------
 
-architecture Behavioral of fpga64_rgbcolor is
+architecture Behavioral of fpga64_rgbcolor_ntsc is
 begin
 	process(index)
 	begin

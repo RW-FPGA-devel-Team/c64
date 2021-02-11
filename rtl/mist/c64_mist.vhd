@@ -118,7 +118,8 @@ constant CONF_STR : string :=
 	"P1OI,Tape sound,Off,On;"&
 	"P1ODF,SID,6581 Mono,6581 Stereo,8580 Mono,8580 Stereo,Pseudo Stereo;"&
 	"P1O6,Audio filter,On,Off;"&
-	"P10A,Digimax,On,Off;" &
+	"P1OJ,Digimax,Off,On;" &
+	"P1OK,SID digi to DM,Off,On;" &
 	"P2O3,Joysticks,Normal,Swapped;"&
 	"P2OG,Disk Write,Enable,Disable;"&
 	"P2O7,Userport,4-player IF,UART;"&
@@ -376,6 +377,8 @@ end component cartridge;
 	signal st_swap_joystick    : std_logic;                    -- status(3)
 	signal st_ntsc             : std_logic;                    -- status(2)
 	signal st_reset            : std_logic;                    -- status(0)
+	signal st_dm               : std_logic;                    -- status(19)
+	signal st_sid_dm           : std_logic;                    -- status(20)
 
 	signal sd_lba         : std_logic_vector(31 downto 0);
 	signal sd_rd          : std_logic_vector(1 downto 0);
@@ -581,6 +584,8 @@ begin
 	st_swap_joystick    <= status(3);
 	st_ntsc             <= status(2);
 	st_reset            <= status(0);
+	st_dm               <= status(19);
+	st_sid_dm           <= status(20);
 
 	data_io_d: data_io
 	port map (
@@ -1054,8 +1059,8 @@ port map(
 --					out2=> compressed_r
 --		);
 
-		audio_dac_r <= compressed_l when st_audio_filter_off='0' else audio_data_r;
-		audio_dac_l <= compressed_l when st_audio_filter_off='0' else audio_data_l_mix;
+		audio_dac_r <= compressed_l when st_audio_filter_off='1' else audio_data_r;
+		audio_dac_l <= compressed_l when st_audio_filter_off='1' else audio_data_l_mix;
 		
 		dac_l : dac
 		port map(
@@ -1121,7 +1126,9 @@ port map(
 		idle => idle, -- second set of idle cycles
 		audio_data_l => audio_data_l,
 		audio_data_r => audio_data_r,
-		extfilter_en => '1' ,--not st_audio_filter_off,
+		extfilter_en => not st_audio_filter_off,
+		dm_enable    => st_dm,
+		digi_sid_dm  => st_sid_dm,
 		sid_mode => st_sid_mode,
 		iec_data_o => c64_iec_data_o,
 		iec_atn_o  => c64_iec_atn_o,

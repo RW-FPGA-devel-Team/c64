@@ -118,6 +118,7 @@ constant CONF_STR : string :=
 	"P1OI,Tape sound,Off,On;"&
 	"P1ODF,SID,6581 Mono,6581 Stereo,8580 Mono,8580 Stereo,Pseudo Stereo;"&
 	"P1O6,Audio filter,On,Off;"&
+	"P10A,Digimax,On,Off;" &
 	"P2O3,Joysticks,Normal,Swapped;"&
 	"P2OG,Disk Write,Enable,Disable;"&
 	"P2O7,Userport,4-player IF,UART;"&
@@ -169,27 +170,39 @@ end component data_io;
 -- audio
 --------
 
-component sigma_delta_dac port
-(
-	clk      : in std_logic;
-	ldatasum : in std_logic_vector(14 downto 0);
-	rdatasum : in std_logic_vector(14 downto 0);
-	aleft     : out std_logic;
-	aright    : out std_logic
-);
+--component sigma_delta_dac port
+--(
+--	clk      : in std_logic;
+--	ldatasum : in std_logic_vector(17 downto 0);
+--	rdatasum : in std_logic_vector(17 downto 0);
+--	aleft     : out std_logic;
+--	aright    : out std_logic
+--);
+--
+--end component sigma_delta_dac;
 
-end component sigma_delta_dac;
+component dac is
+        generic (
+                C_bits  : integer := 18
+        );
+        port (
+                clk_i   : in  std_logic;
+                res_n_i : in  std_logic;
+                dac_i   : in  std_logic_vector(C_bits-1 downto 0);
+                dac_o   : out std_logic
+        );
+end  component dac;
 
 
 component LPFilter is 
 generic
- ( clkspeed   : integer := 2500000;
-   filterfreq : integer := 1590
+ ( clkspeed   : integer := 2700000;
+   filterfreq : integer := 800
  );
 port
  (
-    inSound   : in  std_logic_vector(14 downto 0);
-    outSound  : out std_logic_vector(14 downto 0);
+    inSound   : in  std_logic_vector(17 downto 0);
+    outSound  : out std_logic_vector(17 downto 0);
     clk       : std_logic
  );
 end component;
@@ -450,8 +463,10 @@ end component cartridge;
 	
 	signal audio_data_l : std_logic_vector(17 downto 0);
 	signal audio_data_r : std_logic_vector(17 downto 0);
-	signal audio_data_f_l : std_logic_vector(14 downto 0);
-	signal audio_data_f_r : std_logic_vector(14 downto 0);
+   signal compressed_l : std_logic_vector(17 downto 0);
+	signal compressed_r : std_logic_vector(17 downto 0);
+   signal audio_dac_l  : std_logic_vector(17 downto 0);
+	signal audio_dac_r  : std_logic_vector(17 downto 0);
 
 	signal audio_data_l_mix : std_logic_vector(17 downto 0);
 
@@ -1008,28 +1023,54 @@ begin
 lpf_l: LPFilter
 port map(
               clk      => CLOCK_27,
-              inSound  =>audio_data_l_mix (17 downto 3),
-              outSound => audio_data_f_l
+              inSound  =>audio_data_l_mix,
+              outSound => compressed_l
 );
 
 lpf_r: LPFilter
 
 port map(
               clk      => CLOCK_27,
-              inSound  =>audio_data_r (17 downto 3),
-              outSound => audio_data_f_r
+              inSound  =>audio_data_r,
+              outSound => compressed_r
 );
 
+--
+--	dac : sigma_delta_dac
+--	port map (
+--		clk => clk_c64,
+--		ldatasum => audio_data_l_mix,
+--		rdatasum => audio_data_r,
+--		aleft => AUDIO_L,
+--		aright => AUDIO_R
+--	);
 
-	dac : sigma_delta_dac
-	port map (
-		clk => clk_c64,
-		ldatasum => audio_data_f_l,
-		rdatasum => audio_data_f_r,
-		aleft => AUDIO_L,
-		aright => AUDIO_R
-	);
+--		compressor_g : compressor
+--		port map(
+--					clk => clk_c64,
+--					in1 => audio_data_l_mix(17 downto 6),
+--					in2 => audio_data_r (17 downto 6),
+--					out1=> compressed_l,
+--					out2=> compressed_r
+--		);
 
+		audio_dac_r <= compressed_l when st_audio_filter_off='0' else audio_data_r;
+		audio_dac_l <= compressed_l when st_audio_filter_off='0' else audio_data_l_mix;
+		
+		dac_l : dac
+		port map(
+					clk_i  => clk_c64,
+					res_n_i=> reset_n,
+					dac_i  => audio_dac_l,
+					dac_o  => AUDIO_L
+		);
+		dac_r : dac
+		port map(
+					clk_i  => clk_c64,
+					res_n_i=> reset_n,
+					dac_i  => audio_dac_r,
+					dac_o  => AUDIO_R
+		);
 	fpga64 : entity work.fpga64_sid_iec
 	port map(
 		clk32 => clk_c64,
@@ -1080,7 +1121,7 @@ port map(
 		idle => idle, -- second set of idle cycles
 		audio_data_l => audio_data_l,
 		audio_data_r => audio_data_r,
-		extfilter_en => not st_audio_filter_off,
+		extfilter_en => '1' ,--not st_audio_filter_off,
 		sid_mode => st_sid_mode,
 		iec_data_o => c64_iec_data_o,
 		iec_atn_o  => c64_iec_atn_o,

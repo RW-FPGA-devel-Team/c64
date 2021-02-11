@@ -349,6 +349,8 @@ set_location_assignment PLL_1 -to pll|altpll_component|auto_generated|pll1
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to UART_TX
 
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to UART_RX
+set_global_assignment -name VERILOG_FILE rtl/DigiMax.v
+set_global_assignment -name VERILOG_FILE rtl/sid8580/sid_tables.v
 set_global_assignment -name VERILOG_FILE rtl/misc/LPFilter.v
 set_global_assignment -name VHDL_FILE rtl/fpga64_rgbcolor_pal.vhd
 set_global_assignment -name VHDL_FILE rtl/fpga64_rgbcolor_ntsc.vhd

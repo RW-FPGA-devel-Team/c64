@@ -7,8 +7,8 @@
 // stereo sigma/delta bitstream modulator
 module sigma_delta_dac (
 	input 			clk,			// bus clock
-	input	[14:0]	ldatasum,	// left channel data
-	input	[14:0] 	rdatasum,	// right channel data
+	input	[17:0]	ldatasum,	// left channel data
+	input	[17:0] 	rdatasum,	// right channel data
 	output	reg 	aleft=0,		// left bitstream output
 	output	reg 	aright=0		// right bitsteam output
 );
@@ -16,7 +16,7 @@ module sigma_delta_dac (
 //--------------------------------------------------------------------------------------
 
 // local signals
-localparam DW = 15;
+localparam DW = 18;
 localparam CW = 2;
 localparam RW  = 4;
 localparam A1W = 2;

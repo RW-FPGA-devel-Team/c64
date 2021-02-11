@@ -84,9 +84,9 @@ begin
                 if filter_lp='1' then
                     mix_i <= sum_limit(mix_i, low_pass); 
                 end if;
+                vol_s <= '0' & signed(c_volume_lut(to_integer(volume)));
 
             when 4 =>
---                p_mul <= mix_uns * vol_uns;
                 p_mul_s <= mix_i * vol_s;
                 valid_out <= '1';
                 state <= 0;
@@ -96,9 +96,7 @@ begin
                 
             end case;
 
---            mix_total := not(p_mul(32)) & signed(p_mul(31 downto 15));
---            mixed_out <= mix_total; -- + to_signed(16384, 18);
-            mixed_out <= p_mul_s(33 downto 16);
+            mixed_out <= p_mul_s(33 downto 16) - (p_mul_s(33)&p_mul_s(33)&p_mul_s(33 downto 18));
 
             if reset='1' then
                 mix_i <= (others => '0');
@@ -107,9 +105,4 @@ begin
         end if;
     end process;
 
---    vol_uns   <= "0" & volume & volume & volume & volume;
---    vol_uns   <= '0' & c_volume_lut(to_integer(volume));
---    mix_uns   <= not mix_i(17) & unsigned(mix_i(16 downto 1));
-
-    vol_s   <= '0' & signed(c_volume_lut(to_integer(volume)));
 end arith;

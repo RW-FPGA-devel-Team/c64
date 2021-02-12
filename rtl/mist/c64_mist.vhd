@@ -1028,7 +1028,7 @@ begin
 lpf_l: LPFilter
 port map(
               clk      => CLOCK_27,
-              inSound  =>audio_data_l_mix,
+              inSound  => audio_data_l_mix,
               outSound => compressed_l
 );
 
@@ -1036,7 +1036,7 @@ lpf_r: LPFilter
 
 port map(
               clk      => CLOCK_27,
-              inSound  =>audio_data_r,
+              inSound  => audio_data_r,
               outSound => compressed_r
 );
 
@@ -1059,8 +1059,8 @@ port map(
 --					out2=> compressed_r
 --		);
 
-		audio_dac_r <= compressed_l when st_audio_filter_off='1' else audio_data_r;
-		audio_dac_l <= compressed_l when st_audio_filter_off='1' else audio_data_l_mix;
+		audio_dac_r <= compressed_l when st_audio_filter_off='0' else audio_data_r;
+		audio_dac_l <= compressed_l when st_audio_filter_off='0' else audio_data_l_mix;
 		
 		dac_l : dac
 		port map(

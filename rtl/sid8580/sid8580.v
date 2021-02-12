@@ -3,9 +3,9 @@ module sid8580
 (
 	input         reset,
 
-	input         clk,
-	input         ce_1m,
-
+	input         clk32,
+	input         clk_1Mhz,
+   input 		  cs,
 	input         we,
 	input   [4:0] addr,
 	input   [7:0] data_in,
@@ -80,8 +80,8 @@ wire [11:0] triangle[3];
 // Voice 1 Instantiation
 sid_voice v1
 (
-	.clock(clk),
-	.ce_1m(ce_1m),
+	.clock(clk32),
+	.ce_1m(clk_1Mhz),
 	.reset(reset),
 	.freq_lo(Voice_1_Freq_lo),
 	.freq_hi(Voice_1_Freq_hi),
@@ -104,8 +104,8 @@ sid_voice v1
 // Voice 2 Instantiation
 sid_voice v2
 (
-	.clock(clk),
-	.ce_1m(ce_1m),
+	.clock(clk32),
+	.ce_1m(clk_1Mhz),
 	.reset(reset),
 	.freq_lo(Voice_2_Freq_lo),
 	.freq_hi(Voice_2_Freq_hi),
@@ -128,8 +128,8 @@ sid_voice v2
 // Voice 3 Instantiation
 sid_voice v3
 (
-	.clock(clk),
-	.ce_1m(ce_1m),
+	.clock(clk32),
+	.ce_1m(clk_1Mhz),
 	.reset(reset),
 	.freq_lo(Voice_3_Freq_lo),
 	.freq_hi(Voice_3_Freq_hi),
@@ -154,7 +154,7 @@ sid_voice v3
 // Filter Instantiation
 sid_filters filters
 (
-	.clk(clk),
+	.clk(clk32),
 	.rst(reset),
 	.Fc_lo(Filter_Fc_lo),
 	.Fc_hi(Filter_Fc_hi),
@@ -163,15 +163,15 @@ sid_filters filters
 	.voice1(voice_1),
 	.voice2(voice_2),
 	.voice3(voice_3),
-	.input_valid(ce_1m),
-	.ext_in(12'h000),
+	.input_valid(clk_1Mhz),
+	.ext_in(12'h03f),
 	.sound(audio_data),
 	.extfilter_en(extfilter_en)
 );
 
 sid_tables sid_tables
 (
-	.clock(clk),
+	.clock(clk32),
 	.sawtooth(f_sawtooth),
 	.triangle(f_triangle),
 	._st_out(f__st_out),
@@ -187,11 +187,11 @@ wire [7:0] f_pst_out;
 reg [11:0] f_sawtooth;
 reg [11:0] f_triangle;
 
-always @(posedge clk) begin
+always @(posedge clk32) begin
 	reg [3:0] state;
 	
 	if(~&state) state <= state + 1'd1;;
-	if(ce_1m) state <= 0;
+	if(clk_1Mhz) state <= 0;
 
 	case(state)
 		1,5,9: begin
@@ -226,7 +226,7 @@ end
 
 
 // Register Decoding
-always @(posedge clk) begin
+always @(posedge clk32) begin
 	if (reset) begin
 		Voice_1_Freq_lo <= 0;
 		Voice_1_Freq_hi <= 0;
@@ -255,6 +255,7 @@ always @(posedge clk) begin
 		Filter_Mode_Vol <= 0;
 	end
 	else begin
+	  if (cs) begin
 		if (we) begin
 			last_wr <= data_in;
 			case (addr)
@@ -285,7 +286,8 @@ always @(posedge clk) begin
 				5'h18: Filter_Mode_Vol <= data_in;
 			endcase
 		end
-	end
+	 end
+   end
 end
 
 endmodule

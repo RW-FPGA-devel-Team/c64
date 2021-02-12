@@ -18,7 +18,7 @@ library work;
 
 entity sid_top is
 generic (
-    g_filter_div  : natural := 667; -- for 48KHz output on 32MHz clock.
+    g_filter_div  : natural := 141; --for 32 MHz (221; -- for 50 MHz)
     g_num_voices  : natural := 3 );
 port (
     clock         : in  std_logic;
@@ -29,8 +29,8 @@ port (
     wdata         : in  std_logic_vector(7 downto 0);
     rdata         : out std_logic_vector(7 downto 0);
 
-    potx          : in  std_logic_vector(7 downto 0) := (others => '0');
-    poty          : in  std_logic_vector(7 downto 0) := (others => '0');
+    potx          : in  std_logic_vector(7 downto 0);
+    poty          : in  std_logic_vector(7 downto 0);
 
     comb_wave_l   : in  std_logic := '0';
     comb_wave_r   : in  std_logic := '0';
@@ -133,7 +133,7 @@ begin
 		wren        => wren,
 		wdata       => wdata,
 		rdata       => rdata,
-		
+
 		potx        => potx,
 		poty        => poty,
 

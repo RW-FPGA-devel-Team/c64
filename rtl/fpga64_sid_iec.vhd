@@ -327,9 +327,9 @@ architecture rtl of fpga64_sid_iec is
 	component sid8580
 		port (
 			reset    : in std_logic;
-			--cs       : in std_logic;
-			clk      : in std_logic;
-			ce_1m    : in std_logic;
+			cs       : in std_logic;
+			clk32    : in std_logic;
+			clk_1MHz : in std_logic;
 			we       : in std_logic;
 			addr     : in std_logic_vector(4 downto 0);
 			data_in  : in std_logic_vector(7 downto 0);
@@ -635,15 +635,17 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	
 	
 	
-	sid_data_l <=   std_logic_vector(unsigned(voice_l + 2 ** (voice_l'length -1)) ) when sid_mode(1)='0' else
+	sid_data_l <=   std_logic_vector(unsigned(voice_l + 2 ** (voice_l'length -1))) when sid_mode(1)='0' else
 	                (audio_8580 );
 						 
-   sid_data_r <=	std_logic_vector(unsigned(voice_r + 2 ** (voice_r'length -1))) when sid_mode="000" else
+   sid_data_r <=	 std_logic_vector(unsigned(voice_r + 2 ** (voice_r'length -1))) when sid_mode="000" else
 	                std_logic_vector(unsigned(voice_r + 2 ** (voice_r'length -1))) when sid_mode="001" else
-	                (audio_8580 )     when sid_mode="011" else
+	                (audio_8580 )                                                  when sid_mode="011" else
 	                (audio_8580 ); 					 
 	
-   audio_data_l <= "000" & sid_dm & sid_dm & sid_dm & "000" when (sid_sample='1') else
+
+
+	audio_data_l <= sid_dm & sid_dm & sid_dm & sid_dm & "00" when (sid_sample='1') else
                    sid_data_l              when	(dm_enable = '0') else
 	                sid_data_l + dac_data_l when (dm_enable = '1') else
 						 dac_data_l;
@@ -670,11 +672,10 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	pot_x <= cd4066_sigA and cd4066_sigC;
 	pot_y <= cd4066_sigB and cd4066_sigD;
 
-   second_sid_en<= '0';
---	second_sid_en <= '0' when sid_mode(0) = '0' else
---	                 '1' when cpuAddr(11 downto 8) = x"4" and cpuAddr(5) = '1' else -- D420
---	                 '1' when cpuAddr(11 downto 8) = x"5" else -- D500
---	                 '0';
+   second_sid_en <= '0' when sid_mode(0) = '0' else
+                    '1' when cpuAddr(11 downto 8) = x"4" and cpuAddr(5) = '1' else -- D420
+                    '1' when cpuAddr(11 downto 8) = x"5" else -- D500
+                    '0';
 
 	sid_6581: entity work.sid_top
 	generic map (
@@ -684,7 +685,7 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 		clock => clk32,
 		reset => reset,
 
-		addr => "000" & cpuAddr(4 downto 0),
+		addr => second_sid_en & "00" & cpuAddr(4 downto 0),
 		wren => pulseWrRam and phi0_cpu and cs_sid,
 		wdata => std_logic_vector(cpuDo),
 		rdata => sid_do6581,
@@ -705,9 +706,9 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	sid_8580 : sid8580
 	port map (
 		reset => reset,
-		clk  => clk32,
-		ce_1m => clk_1MHz(31),
-		--cs => cs_sid and not second_sid_en,
+		clk32  => clk32,
+		clk_1MHz => clk_1MHz(31),
+		cs => cs_sid and not second_sid_en,
 		we => pulseWrRam and phi0_cpu and cs_sid,
 		addr => std_logic_vector(cpuAddr(4 downto 0)),
 		data_in => std_logic_vector(cpuDo),
@@ -720,7 +721,7 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	
 	Digi : DigiMax
 	port map (
-	   clk     => clk_1MHz(31),
+	   clk     => clk32,
 		reset_n => reset_n,
 		wr_n   => not cpuWe,
 		sid_sample => sid_sample,

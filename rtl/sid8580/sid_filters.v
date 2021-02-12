@@ -57,6 +57,7 @@ always @(posedge clk) begin
 	reg signed [35:0] mulr;
 	reg signed [17:0] mula;
 	reg signed [17:0] mulb;
+
 	if (rst) begin
 		state <= 0;
 		Vlp   <= 0;

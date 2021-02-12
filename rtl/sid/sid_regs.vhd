@@ -98,6 +98,7 @@ architecture gideon of sid_regs is
     signal sust_rel : byte_array_t(0 to 15)  := (others => (others => '0'));
     signal do_write : std_logic;
     signal wdata_d  : std_logic_vector(7 downto 0);
+    signal bus_value: std_logic_vector(7 downto 0);
     signal filt_en_i: std_logic_vector(15 downto 0) := (others => '0');
     
     constant address_remap : byte_array_t(0 to 255) := (
@@ -149,18 +150,17 @@ architecture gideon of sid_regs is
         X"FF", X"FF", X"FF", X"FF", X"FF", X"FF", X"FF",  -- F7
         X"FF", X"FF" );                                   -- FE
          
-    signal address  : unsigned(7 downto 0);
-	 signal last_wr  : std_logic_vector(7 downto 0);
 begin
     process(clock)
+        variable address: unsigned(7 downto 0);
     begin
         if rising_edge(clock) then
-            address  <= unsigned(address_remap(to_integer(addr)));
+            address  := unsigned(address_remap(to_integer(addr)));
             do_write <= wren;
             wdata_d  <= wdata;
 
             if do_write='0' and wren='1' then
-					 last_wr <= wdata_d;
+                bus_value <= wdata_d;
                 if address(3)='0' then -- Voice register
                     case address(2 downto 0) is
                     when "000" =>   freq_lo(to_integer(address(7 downto 4))) <= wdata_d;
@@ -207,11 +207,11 @@ begin
 
             -- Readback (unmapped address)
             case addr is
-            when "00011001" => rdata <= potx;
-            when "00011010" => rdata <= poty;
-            when "00011011" => rdata <= osc3;
-            when "00011100" => rdata <= env3;
-            when others     => rdata <= last_wr;
+            when "00011001" => rdata <= potx; bus_value <= potx;
+            when "00011010" => rdata <= poty; bus_value <= poty;
+            when "00011011" => rdata <= osc3; bus_value <= osc3;
+            when "00011100" => rdata <= env3; bus_value <= env3;
+            when others     => rdata <= bus_value;
             end case;
 
             if reset='1' then

@@ -25,6 +25,10 @@ always @(posedge clk) begin
 			16'hde01: dac_1 <= data_in;
 			16'hde02: dac_2 <= data_in;
 			16'hde03: dac_3 <= data_in;
+			16'hdf00: dac_0 <= data_in;
+			16'hdf01: dac_1 <= data_in;
+			16'hdf02: dac_2 <= data_in;
+			16'hdf03: dac_3 <= data_in;
 			16'hd418: if (sid_redirect)
 						 begin
 			            sid_sample <= 1'b1;

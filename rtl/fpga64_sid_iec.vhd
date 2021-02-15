@@ -38,6 +38,7 @@ entity fpga64_sid_iec is
 	);
 	port(
 		clk32       : in  std_logic;
+		clk64       : in  std_logic;
 		reset_n     : in  std_logic;
 		-- keyboard interface (use any ordinairy PS2 keyboard)
 		kbd_clk     : in  std_logic;
@@ -285,7 +286,7 @@ architecture rtl of fpga64_sid_iec is
 	signal cd4066_sigD  : std_logic_vector(7 downto 0);
 
 	signal clk_1MHz     : std_logic_vector(31 downto 0);
-	signal voice_l      : signed(17 downto 0);
+	signal voice_l      : std_logic_vector(17 downto 0);
 	signal voice_r      : signed(17 downto 0);
 	signal pot_x        : std_logic_vector(7 downto 0);
 	signal pot_y        : std_logic_vector(7 downto 0);
@@ -635,13 +636,12 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	
 	
 	
-	sid_data_l <=   std_logic_vector(unsigned(voice_l + 2 ** (voice_l'length -1))) when sid_mode(1)='0' else
-	                (audio_8580 );
+	sid_data_l <=   voice_l  when sid_mode(1)='0' else audio_8580 ;
 						 
-   sid_data_r <=	 std_logic_vector(unsigned(voice_r + 2 ** (voice_r'length -1))) when sid_mode="000" else
-	                std_logic_vector(unsigned(voice_r + 2 ** (voice_r'length -1))) when sid_mode="001" else
-	                (audio_8580 )                                                  when sid_mode="011" else
-	                (audio_8580 ); 					 
+   sid_data_r <=	 voice_l when sid_mode="000" else
+	                voice_l when sid_mode="001" else
+	                audio_8580 when sid_mode="011" else
+	                audio_8580 ; 					 
 	
 
 
@@ -677,30 +677,22 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
                     '1' when cpuAddr(11 downto 8) = x"5" else -- D500
                     '0';
 
-	sid_6581: entity work.sid_top
-	generic map (
-		g_num_voices => 11
-	)
+	sid_6581: entity work.sid6581
 	port map (
-		clock => clk32,
+		clk32 => clk64,
+		clk_1MHz => clk_1MHz(31),
 		reset => reset,
+      clk_DAC => clk32,
+		addr => std_logic_vector(cpuAddr(4 downto 0)),
+		we => pulseWrRam and phi0_cpu and cs_sid,
+		din => std_logic_vector(cpuDo),
+		dout => sid_do6581,
+      cs => cs_sid,
+		pot_x => pot_x,
+		pot_y => pot_y,
 
-		addr => second_sid_en & "00" & cpuAddr(4 downto 0),
-		wren => pulseWrRam and phi0_cpu and cs_sid,
-		wdata => std_logic_vector(cpuDo),
-		rdata => sid_do6581,
-
-		potx => pot_x,
-		poty => pot_y,
-
-		comb_wave_l => '0',
-		comb_wave_r => '0',
-
-		extfilter_en => extfilter_en,
-
-		start_iter => clk_1MHz(31),
-		sample_left => voice_l,
-		sample_right => voice_r
+		audio_out => open,
+		audio_data => voice_l
 	);
 
 	sid_8580 : sid8580

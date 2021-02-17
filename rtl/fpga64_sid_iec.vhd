@@ -38,7 +38,6 @@ entity fpga64_sid_iec is
 	);
 	port(
 		clk32       : in  std_logic;
-		clk64       : in  std_logic;
 		reset_n     : in  std_logic;
 		-- keyboard interface (use any ordinairy PS2 keyboard)
 		kbd_clk     : in  std_logic;
@@ -313,9 +312,6 @@ architecture rtl of fpga64_sid_iec is
 			addr     : in std_logic_vector(15 downto 0);
 			data_in  : in std_logic_vector(7 downto 0);
 			wr_n		: in std_logic;
-			sid_sample  : out std_logic;
-			sid_dm      : out std_logic_vector (3 downto 0);
-			sid_redirect: in std_logic;
 			dac_0    : out std_logic_vector(7 downto 0);
 			dac_1    : out std_logic_vector(7 downto 0);
 			dac_2    : out std_logic_vector(7 downto 0);
@@ -645,13 +641,11 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	
 
 
-	audio_data_l <= sid_dm & sid_dm & sid_dm & sid_dm & "00" when (sid_sample='1') else
-                   sid_data_l              when	(dm_enable = '0') else
+	audio_data_l <= sid_data_l              when	(dm_enable = '0') else
 	                sid_data_l + dac_data_l when (dm_enable = '1') else
 						 dac_data_l;
 	
-   audio_data_r <= "000" & sid_dm & sid_dm & sid_dm & "000" when (sid_sample='1') else
-                   sid_data_l              when	(dm_enable = '0') else
+   audio_data_r <= sid_data_l              when	(dm_enable = '0') else
 	                sid_data_l + dac_data_r when (dm_enable = '1') else
 						 dac_data_r;
 	
@@ -679,19 +673,19 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 
 	sid_6581: entity work.sid6581
 	port map (
-		clk32 => clk64,
+		clk32 => clk32,
 		clk_1MHz => clk_1MHz(31),
 		reset => reset,
-      clk_DAC => clk32,
+      
 		addr => std_logic_vector(cpuAddr(4 downto 0)),
 		we => pulseWrRam and phi0_cpu and cs_sid,
 		din => std_logic_vector(cpuDo),
 		dout => sid_do6581,
       cs => cs_sid,
+		
 		pot_x => pot_x,
 		pot_y => pot_y,
 
-		audio_out => open,
 		audio_data => voice_l
 	);
 
@@ -716,9 +710,6 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	   clk     => clk32,
 		reset_n => reset_n,
 		wr_n   => not cpuWe,
-		sid_sample => sid_sample,
-		sid_redirect => digi_sid_dm,
-		sid_dm       => sid_dm,
 		addr   => std_logic_vector(cpuAddr),
 		data_in=> std_logic_vector(cpuDo),
 		dac_0  => dac_0,
@@ -727,21 +718,7 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 		dac_3  => dac_3
 	);
 
---	sid_8580_r : sid8580
---	port map (
---		reset => reset,
---		clk32 => clk32,
---		clk_1MHz => clk_1MHz(31),
---		cs => cs_sid and second_sid_en,
---		we => pulseWrRam and phi0_cpu,
---		addr => std_logic_vector(cpuAddr(4 downto 0)),
---		data_in => std_logic_vector(cpuDo),
---		data_out => sid_do8580_r,
---		pot_x => pot_x,
---		pot_y => pot_y,
---		audio_data => audio_8580_r,
---		extfilter_en => extfilter_en
---);
+
 
 -- -----------------------------------------------------------------------
 -- CIAs

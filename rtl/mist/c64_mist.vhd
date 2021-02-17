@@ -447,7 +447,6 @@ end component cartridge;
 	signal clk_c64 : std_logic;	-- 31.527mhz (PAL), 32.727mhz(NTSC) clock source
 	signal clk_ram : std_logic; -- 2 x clk_c64
 	signal clk32   : std_logic; -- 32mhz
-	signal clk64   : std_logic;
 	signal todclk : std_logic;
 	signal toddiv : std_logic_vector(19 downto 0);
 	signal toddiv3 : std_logic_vector(1 downto 0);
@@ -964,7 +963,6 @@ begin
 	port map(
 		inclk0 => CLOCK_27,
 		c0 => clk32,
-		c1 => clk64,
 		locked => pll_locked
 	);
 
@@ -1081,7 +1079,6 @@ port map(
 	fpga64 : entity work.fpga64_sid_iec
 	port map(
 		clk32 => clk_c64,
-		clk64 => clk64,
 		reset_n => reset_n,
 		kbd_clk => not ps2_clk,
 		kbd_dat => ps2_dat,

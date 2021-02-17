@@ -42,7 +42,6 @@ entity sid6581 is
 	port (
 		clk_1MHz			: in std_logic;		-- main SID clock signal
 		clk32				: in std_logic;		-- main clock signal
-		clk_DAC			: in std_logic;		-- DAC clock signal, must be as high as possible for the best results
 		reset				: in std_logic;		-- high active signal (reset when reset = '1')
 		cs					: in std_logic;		-- "chip select", when this signal is '1' this model can be accessed
 		we					: in std_logic;		-- when '1' this model can be written to, otherwise access is considered as read
@@ -125,29 +124,7 @@ architecture Behavioral of sid6581 is
 -------------------------------------------------------------------------------
 
 begin
-	digital_to_analog: entity work.pwm_sddac
-		port map(
-			clk_i				=> clk_DAC,
-			reset				=> reset,
-			dac_i				=> unsigned_audio(17 downto 8),
-			dac_o				=> audio_out
-		);
-	
---	paddle_x: entity work.pwm_sdadc
---		port map (
---			clk				=> clk_1MHz,
---			reset				=> reset,
---			ADC_out 			=> Misc_PotX,
---			ADC_in 			=> pot_x
---		);
---
---	paddle_y: entity work.pwm_sdadc
---		port map (
---			clk				=> clk_1MHz,
---			reset				=> reset,
---			ADC_out 			=> Misc_PotY,
---			ADC_in 			=> pot_y
---		);
+
 
 	sid_voice_1: entity work.sid6581_voice
 	port map(

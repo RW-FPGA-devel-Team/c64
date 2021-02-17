@@ -75,6 +75,9 @@ architecture Behavioral of sid6581_voice is
 	signal 	frequency					: std_logic_vector(15 downto 0) := (others => '0');
 	signal 	pulsewidth					: std_logic_vector(11 downto 0) := (others => '0');
 
+	-- Temporary signals
+	signal   has_wave                : std_logic;
+	signal   has_noise               : std_logic;
 	-- Envelope Generator
 	type		envelope_state_types is 	(idle, attack, attack_lp, decay, decay_lp, sustain, release, release_lp);
 	signal 	cur_state, next_state	: envelope_state_types; 
@@ -267,24 +270,63 @@ begin
 	-- which produced unpredictable results, so I didn't encourage this, especially
 	-- since it could lock up the pseudo-random sequence generator by filling it
 	-- with zeroes."
+	--
+
 	Snd_select:process(clk_1MHz)
 	begin
-		if (rising_edge(clk_1MHz)) then
-			signal_mux(11) <= (triangle(11) and Control(4)) or (sawtooth(11) and Control(5)) or (pulse and Control(6)) or (noise(11) and Control(7));
-			signal_mux(10) <= (triangle(10) and Control(4)) or (sawtooth(10) and Control(5)) or (pulse and Control(6)) or (noise(10) and Control(7));
-			signal_mux(9)  <= (triangle(9)  and Control(4)) or (sawtooth(9)  and Control(5)) or (pulse and Control(6)) or (noise(9)  and Control(7));
-			signal_mux(8)  <= (triangle(8)  and Control(4)) or (sawtooth(8)  and Control(5)) or (pulse and Control(6)) or (noise(8)  and Control(7));
-			signal_mux(7)  <= (triangle(7)  and Control(4)) or (sawtooth(7)  and Control(5)) or (pulse and Control(6)) or (noise(7)  and Control(7));
-			signal_mux(6)  <= (triangle(6)  and Control(4)) or (sawtooth(6)  and Control(5)) or (pulse and Control(6)) or (noise(6)  and Control(7));
-			signal_mux(5)  <= (triangle(5)  and Control(4)) or (sawtooth(5)  and Control(5)) or (pulse and Control(6)) or (noise(5)  and Control(7));
-			signal_mux(4)  <= (triangle(4)  and Control(4)) or (sawtooth(4)  and Control(5)) or (pulse and Control(6)) or (noise(4)  and Control(7));
-			signal_mux(3)  <= (triangle(3)  and Control(4)) or (sawtooth(3)  and Control(5)) or (pulse and Control(6)) or (noise(3)  and Control(7));
-			signal_mux(2)  <= (triangle(2)  and Control(4)) or (sawtooth(2)  and Control(5)) or (pulse and Control(6)) or (noise(2)  and Control(7));
-			signal_mux(1)  <= (triangle(1)  and Control(4)) or (sawtooth(1)  and Control(5)) or (pulse and Control(6)) or (noise(1)  and Control(7));
-			signal_mux(0)  <= (triangle(0)  and Control(4)) or (sawtooth(0)  and Control(5)) or (pulse and Control(6)) or (noise(0)  and Control(7));
+		if (rising_edge(clk_1MHz)) then 
+		   has_wave <= control(4) or control(5) or control(6);
+			has_noise <= control(7);
+			if ((has_wave and has_noise) ='1') then 
+			  signal_mux(11) <= '0';
+			  signal_mux(10) <= '0';
+			  signal_mux(9) <= '0';
+			  signal_mux(8) <= '0';
+			  signal_mux(7) <= '0';
+			  signal_mux(6) <= '0';
+			  signal_mux(5) <= '0';
+			  signal_mux(4) <= '0';
+			  signal_mux(3) <= '0';
+			  signal_mux(2) <= '0';
+			  signal_mux(1) <= '0';
+			  signal_mux(0) <= '0'; 
+			else
+			  
+				signal_mux(11) <= ((triangle(11) and Control(4)) or (sawtooth(11) and Control(5)) or (pulse and Control(6))) or (noise(11) and Control(7));
+				signal_mux(10) <= ((triangle(10) and Control(4)) or (sawtooth(10) and Control(5)) or (pulse and Control(6))) or (noise(10) and Control(7));
+				signal_mux(9)  <= ((triangle(9)  and Control(4)) or (sawtooth(9)  and Control(5)) or (pulse and Control(6))) or (noise(9)  and Control(7));
+				signal_mux(8)  <= ((triangle(8)  and Control(4)) or (sawtooth(8)  and Control(5)) or (pulse and Control(6))) or (noise(8)  and Control(7));
+				signal_mux(7)  <= ((triangle(7)  and Control(4)) or (sawtooth(7)  and Control(5)) or (pulse and Control(6))) or (noise(7)  and Control(7));
+				signal_mux(6)  <= ((triangle(6)  and Control(4)) or (sawtooth(6)  and Control(5)) or (pulse and Control(6))) or (noise(6)  and Control(7));
+				signal_mux(5)  <= ((triangle(5)  and Control(4)) or (sawtooth(5)  and Control(5)) or (pulse and Control(6))) or (noise(5)  and Control(7));
+				signal_mux(4)  <= ((triangle(4)  and Control(4)) or (sawtooth(4)  and Control(5)) or (pulse and Control(6))) or (noise(4)  and Control(7));
+				signal_mux(3)  <= ((triangle(3)  and Control(4)) or (sawtooth(3)  and Control(5)) or (pulse and Control(6))) or (noise(3)  and Control(7));
+				signal_mux(2)  <= ((triangle(2)  and Control(4)) or (sawtooth(2)  and Control(5)) or (pulse and Control(6))) or (noise(2)  and Control(7));
+				signal_mux(1)  <= ((triangle(1)  and Control(4)) or (sawtooth(1)  and Control(5)) or (pulse and Control(6))) or (noise(1)  and Control(7));
+				signal_mux(0)  <= ((triangle(0)  and Control(4)) or (sawtooth(0)  and Control(5)) or (pulse and Control(6))) or (noise(0)  and Control(7));
+			end if;
 		end if;
 	end process;
-
+	
+	
+--	Snd_select:process(clk_1MHz)
+--	begin
+--		if (rising_edge(clk_1MHz)) then 
+--			signal_mux(11) <= ((triangle(11) and Control(4)) or (sawtooth(11) and Control(5)) or (pulse and Control(6))) xor (noise(11) and Control(7));
+--			signal_mux(10) <= ((triangle(10) and Control(4)) or (sawtooth(10) and Control(5)) or (pulse and Control(6))) xor (noise(10) and Control(7));
+--			signal_mux(9)  <= ((triangle(9)  and Control(4)) or (sawtooth(9)  and Control(5)) or (pulse and Control(6))) xor (noise(9)  and Control(7));
+--			signal_mux(8)  <= ((triangle(8)  and Control(4)) or (sawtooth(8)  and Control(5)) or (pulse and Control(6))) xor (noise(8)  and Control(7));
+--			signal_mux(7)  <= ((triangle(7)  and Control(4)) or (sawtooth(7)  and Control(5)) or (pulse and Control(6))) xor (noise(7)  and Control(7));
+--			signal_mux(6)  <= ((triangle(6)  and Control(4)) or (sawtooth(6)  and Control(5)) or (pulse and Control(6))) xor (noise(6)  and Control(7));
+--			signal_mux(5)  <= ((triangle(5)  and Control(4)) or (sawtooth(5)  and Control(5)) or (pulse and Control(6))) xor (noise(5)  and Control(7));
+--			signal_mux(4)  <= ((triangle(4)  and Control(4)) or (sawtooth(4)  and Control(5)) or (pulse and Control(6))) xor (noise(4)  and Control(7));
+--			signal_mux(3)  <= ((triangle(3)  and Control(4)) or (sawtooth(3)  and Control(5)) or (pulse and Control(6))) xor (noise(3)  and Control(7));
+--			signal_mux(2)  <= ((triangle(2)  and Control(4)) or (sawtooth(2)  and Control(5)) or (pulse and Control(6))) xor (noise(2)  and Control(7));
+--			signal_mux(1)  <= ((triangle(1)  and Control(4)) or (sawtooth(1)  and Control(5)) or (pulse and Control(6))) xor (noise(1)  and Control(7));
+--			signal_mux(0)  <= ((triangle(0)  and Control(4)) or (sawtooth(0)  and Control(5)) or (pulse and Control(6))) xor (noise(0)  and Control(7));
+--		end if;
+--	end process;
+	
 	-- Waveform envelope (volume) control :
 	-- "The output of the Waveform D/A (which was an analog voltage at this point)
 	-- was fed into the reference input of an 8-bit multiplying D/A, creating a DCA

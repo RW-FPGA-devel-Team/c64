@@ -52,8 +52,10 @@ entity sid6581 is
 
 		pot_x				: in std_logic_vector(7 downto 0);	-- paddle input-X
 		pot_y				: in std_logic_vector(7 downto 0);	-- paddle input-Y
-		audio_out		: out std_logic;		-- this line holds the audio-signal in PWM format
-		audio_data		: out std_logic_vector(17 downto 0)
+ 
+		audio_6581		: out std_logic_vector(17 downto 0);
+		audio_8580		: out std_logic_vector(17 downto 0)
+
 	);
 end sid6581;
 
@@ -95,38 +97,76 @@ architecture Behavioral of sid6581 is
 	signal Misc_PotX			: std_logic_vector(7 downto 0)	:= (others => '0');
 	signal Misc_PotY			: std_logic_vector(7 downto 0)	:= (others => '0');
 	signal Misc_Osc3_Random	: std_logic_vector(7 downto 0)	:= (others => '0');
-	signal Misc_Env3			: std_logic_vector(7 downto 0)	:= (others => '0');
+	signal Misc_6581_Env3	: std_logic_vector(7 downto 0)	:= (others => '0');
+	signal Misc_8580_Env3	: std_logic_vector(7 downto 0)	:= (others => '0');
 
 	signal do_buf				: std_logic_vector(7 downto 0)	:= (others => '0');
 
-	signal voice_1				: std_logic_vector(11 downto 0)	:= (others => '0');
-	signal voice_2				: std_logic_vector(11 downto 0)	:= (others => '0');
-	signal voice_3				: std_logic_vector(11 downto 0)	:= (others => '0');
+	signal voice_6581_1				: std_logic_vector(11 downto 0)	:= (others => '0');
+	signal voice_6581_2				: std_logic_vector(11 downto 0)	:= (others => '0');
+	signal voice_6581_3				: std_logic_vector(11 downto 0)	:= (others => '0');
+	signal voice_8580_1				: std_logic_vector(11 downto 0)	:= (others => '0');
+	signal voice_8580_2				: std_logic_vector(11 downto 0)	:= (others => '0');
+	signal voice_8580_3				: std_logic_vector(11 downto 0)	:= (others => '0');
 	signal voice_mixed		: std_logic_vector(13 downto 0)	:= (others => '0');
 	signal voice_volume		: std_logic_vector(35 downto 0)	:= (others => '0');
 
 	signal divide_0			: std_logic_vector(31 downto 0)	:= (others => '0');
-	signal voice_1_PA_MSB	: std_logic := '0';
-	signal voice_2_PA_MSB	: std_logic := '0';
-	signal voice_3_PA_MSB	: std_logic := '0';
+	signal voice_1_PA_MSB_6581	: std_logic := '0';
+	signal voice_2_PA_MSB_6581	: std_logic := '0';
+	signal voice_3_PA_MSB_6581	: std_logic := '0';
+   signal voice_1_PA_MSB_8580	: std_logic := '0';
+	signal voice_2_PA_MSB_8580	: std_logic := '0';
+	signal voice_3_PA_MSB_8580	: std_logic := '0';
 
-	signal voice1_signed		: signed(12 downto 0);
-	signal voice2_signed		: signed(12 downto 0);
-	signal voice3_signed		: signed(12 downto 0);
+	signal v6581_1_signed		: signed(12 downto 0);
+	signal v6581_2_signed		: signed(12 downto 0);
+	signal v6581_3_signed		: signed(12 downto 0);
+	signal v8580_1_signed		: signed(12 downto 0);
+	signal v8580_2_signed		: signed(12 downto 0);
+	signal v8580_3_signed		: signed(12 downto 0);
+	
 	constant ext_in_signed	: signed(12 downto 0) := to_signed(0,13);
-	signal filtered_audio	: signed(18 downto 0);
+
+	signal filtered_6581	: signed(18 downto 0);
+	signal filtered_8580	: signed(18 downto 0);
 	signal tick_q1, tick_q2	: std_logic;
 	signal input_valid		: std_logic;
-	signal unsigned_audio	: std_logic_vector(17 downto 0);
-	signal unsigned_filt		: std_logic_vector(18 downto 0);
+	signal u_audio_6581  	: std_logic_vector(17 downto 0);
+	signal u_audio_8580  	: std_logic_vector(17 downto 0);
+	signal u_filt_6581		: std_logic_vector(18 downto 0);
+	signal u_filt_8580		: std_logic_vector(18 downto 0);
 	signal ff1					: std_logic;
+	
+   signal sawtooth 			: std_logic_vector(11 downto 0);
+	signal triangle 			: std_logic_vector(11 downto 0);
+ 	signal w_st_out  			: std_logic_vector(7 downto 0);
+	signal w_p_t_out  		: std_logic_vector(7 downto 0);
+	signal w_ps_out  			: std_logic_vector(7 downto 0);
+	signal w_pst_out  		: std_logic_vector(7 downto 0);
 
+	
+	
+	component sid_tables
+	port (
+		clock    : in std_logic;
+		sawtooth : in std_logic_vector(11 downto 0);
+		triangle : in std_logic_vector(11 downto 0);
+		w_st_out  : out std_logic_vector(7 downto 0);
+		w_p_t_out  : out std_logic_vector(7 downto 0);
+		w_ps_out  : out std_logic_vector(7 downto 0);
+		w_pst_out  : out std_logic_vector(7 downto 0)
+		
+	);
+	end component sid_tables;
+	
 -------------------------------------------------------------------------------
 
 begin
 
 
-	sid_voice_1: entity work.sid6581_voice
+------------------------ SID 6581 voices --------------------------------------
+	v_6581_1: entity work.sid6581_voice
 	port map(
 		clk_1MHz				=> clk_1MHz,
 		reset					=> reset,
@@ -137,14 +177,14 @@ begin
 		Control				=> Voice_1_Control,
 		Att_dec				=> Voice_1_Att_dec,
 		Sus_Rel				=> Voice_1_Sus_Rel,
-		PA_MSB_in			=> voice_3_PA_MSB,
-		PA_MSB_out			=> voice_1_PA_MSB,
+		PA_MSB_in			=> voice_3_PA_MSB_6581,
+		PA_MSB_out			=> voice_1_PA_MSB_6581,
 		Osc					=> Voice_1_Osc,
 		Env					=> Voice_1_Env,
-		voice					=> voice_1
+		voice					=> voice_6581_1
 	);
 
-	sid_voice_2: entity work.sid6581_voice
+	v_6581_2: entity work.sid6581_voice
 	port map(
 		clk_1MHz				=> clk_1MHz,
 		reset					=> reset,
@@ -155,14 +195,14 @@ begin
 		Control				=> Voice_2_Control,
 		Att_dec				=> Voice_2_Att_dec,
 		Sus_Rel				=> Voice_2_Sus_Rel,
-		PA_MSB_in			=> voice_1_PA_MSB,
-		PA_MSB_out			=> voice_2_PA_MSB,
+		PA_MSB_in			=> voice_1_PA_MSB_6581,
+		PA_MSB_out			=> voice_2_PA_MSB_6581,
 		Osc					=> Voice_2_Osc,
 		Env					=> Voice_2_Env,
-		voice					=> voice_2
+		voice					=> voice_6581_2
 	);
 
-	sid_voice_3: entity work.sid6581_voice
+	v_6581_3: entity work.sid6581_voice
 	port map(
 		clk_1MHz				=> clk_1MHz,
 		reset					=> reset,
@@ -173,11 +213,102 @@ begin
 		Control				=> Voice_3_Control,
 		Att_dec				=> Voice_3_Att_dec,
 		Sus_Rel				=> Voice_3_Sus_Rel,
-		PA_MSB_in			=> voice_2_PA_MSB,
-		PA_MSB_out			=> voice_3_PA_MSB,
+		PA_MSB_in			=> voice_2_PA_MSB_6581,
+		PA_MSB_out			=> voice_3_PA_MSB_6581,
 		Osc					=> Misc_Osc3_Random,
-		Env					=> Misc_Env3,
-		voice					=> voice_3
+		Env					=> Misc_6581_Env3,
+		voice					=> voice_6581_3
+	);
+
+------------------------ SID 8580 voices --------------------------------------
+	tablas : sid_tables
+	port map (
+	   clock    => clk_1MHz,
+		sawtooth => sawtooth,
+		triangle => triangle,
+		w_st_out  => w_st_out,
+		w_p_t_out => w_p_t_out,
+		w_ps_out  => w_ps_out,
+		w_pst_out => w_pst_out
+	);
+
+
+	v_8580_1: entity work.sid8580_voice
+	port map(
+		clk_1MHz				=> clk_1MHz,
+		reset					=> reset,
+		Freq_lo				=> Voice_1_Freq_lo,
+		Freq_hi				=> Voice_1_Freq_hi,
+		Pw_lo					=> Voice_1_Pw_lo,
+		Pw_hi					=> Voice_1_Pw_hi,
+		Control				=> Voice_1_Control,
+		Att_dec				=> Voice_1_Att_dec,
+		Sus_Rel				=> Voice_1_Sus_Rel,
+		PA_MSB_in			=> voice_3_PA_MSB_8580,
+		PA_MSB_out			=> voice_1_PA_MSB_8580,
+		Osc					=> Voice_1_Osc,
+		Env					=> Voice_1_Env,
+
+		sawtooth 			=> sawtooth,
+		triangle 			=> triangle,
+		w_st_out 			=> w_st_out,
+		w_p_t_out 			=> w_p_t_out,
+		w_ps_out  			=> w_ps_out,
+		w_pst_out 			=> w_pst_out,
+	
+		voice					=> voice_8580_1
+	);
+
+	v_8580_2: entity work.sid8580_voice
+	port map(
+		clk_1MHz				=> clk_1MHz,
+		reset					=> reset,
+		Freq_lo				=> Voice_2_Freq_lo,
+		Freq_hi				=> Voice_2_Freq_hi,
+		Pw_lo					=> Voice_2_Pw_lo,
+		Pw_hi					=> Voice_2_Pw_hi,
+		Control				=> Voice_2_Control,
+		Att_dec				=> Voice_2_Att_dec,
+		Sus_Rel				=> Voice_2_Sus_Rel,
+		PA_MSB_in			=> voice_1_PA_MSB_8580,
+		PA_MSB_out			=> voice_2_PA_MSB_8580,
+		Osc					=> Voice_2_Osc,
+		Env					=> Voice_2_Env,
+		
+		sawtooth 			=> open,
+		triangle 			=> open,
+		w_st_out 			=> w_st_out,
+		w_p_t_out 			=> w_p_t_out,
+		w_ps_out  			=> w_ps_out,
+		w_pst_out 			=> w_pst_out,
+
+		voice					=> voice_8580_2
+	);
+
+	v_8580_3: entity work.sid8580_voice
+	port map(
+		clk_1MHz				=> clk_1MHz,
+		reset					=> reset,
+		Freq_lo				=> Voice_3_Freq_lo,
+		Freq_hi				=> Voice_3_Freq_hi,
+		Pw_lo					=> Voice_3_Pw_lo,
+		Pw_hi					=> Voice_3_Pw_hi,
+		Control				=> Voice_3_Control,
+		Att_dec				=> Voice_3_Att_dec,
+		Sus_Rel				=> Voice_3_Sus_Rel,
+		PA_MSB_in			=> voice_2_PA_MSB_8580,
+		PA_MSB_out			=> voice_3_PA_MSB_8580,
+		Osc					=> open, --Misc_Osc3_Random,
+		Env					=> Misc_8580_Env3,
+		
+		sawtooth 			=> open,
+		triangle 			=> open,
+		w_st_out 			=> w_st_out,
+		w_p_t_out 			=> w_p_t_out,
+		w_ps_out  			=> w_ps_out,
+		w_pst_out 			=> w_pst_out,
+
+		voice					=> voice_8580_3
 	);
 
 -------------------------------------------------------------------------------------
@@ -206,11 +337,19 @@ begin
 
 	input_valid <= '1' when tick_q1 /=tick_q2 else '0';
 
-	voice1_signed <= signed("0" & voice_1) - 2048;
-	voice2_signed <= signed("0" & voice_2) - 2048;
-	voice3_signed <= signed("0" & voice_3) - 2048;
+	v6581_1_signed <= signed("0" & voice_6581_1) - 2048;
+	v6581_2_signed <= signed("0" & voice_6581_2) - 2048;
+	v6581_3_signed <= signed("0" & voice_6581_3) - 2048;
 
-	filters: entity work.sid6581_filters 
+	v8580_1_signed <= signed("0" & voice_8580_1) - 2048;
+	v8580_2_signed <= signed("0" & voice_8580_2) - 2048;
+	v8580_3_signed <= signed("0" & voice_8580_3) - 2048;
+
+-------------------------------------------------------------
+--- 6581 Section
+-------------------------------------------------------------
+
+	filters_6581: entity work.sid6581_filters 
 	port map (
 		clk			=> clk32,
 		rst			=> reset,
@@ -220,22 +359,53 @@ begin
 		Res_Filt		=> Filter_Res_Filt,
 		Mode_Vol		=> Filter_Mode_Vol,
 		-- Voices - resampled to 13 bit
-		voice1		=> voice1_signed,
-		voice2		=> voice2_signed,
-		voice3		=> voice3_signed,
+		voice1		=> v6581_1_signed,
+		voice2		=> v6581_2_signed,
+		voice3		=> v6581_3_signed,
 		--
 		input_valid => input_valid,
 		ext_in		=> ext_in_signed,
 
-		sound			=> filtered_audio,
+		sound			=> filtered_6581,
 		valid			=> open
 	);
+	
+	u_filt_6581 	<= std_logic_vector(filtered_6581 + "1000000000000000000");
+	u_audio_6581	<= u_filt_6581(18 downto 1);
+	audio_6581		<= u_audio_6581;
 
-	unsigned_filt 	<= std_logic_vector(filtered_audio + "1000000000000000000");
-	unsigned_audio	<= unsigned_filt(18 downto 1);
-	audio_data		<= unsigned_audio;
+---------------------------------------------------------------
+--- 8580 section
+---------------------------------------------------------------
+	
+	filters_8580: entity work.sid8580_filters 
+	port map (
+		clk			=> clk32,
+		rst			=> reset,
+		-- SID registers.
+		Fc_lo			=> Filter_Fc_lo,
+		Fc_hi			=> Filter_Fc_hi,
+		Res_Filt		=> Filter_Res_Filt,
+		Mode_Vol		=> Filter_Mode_Vol,
+		-- Voices - resampled to 13 bit
+		voice1		=> v8580_1_signed,
+		voice2		=> v8580_2_signed,
+		voice3		=> v8580_3_signed,
+		--
+		input_valid => input_valid,
+		ext_in		=> ext_in_signed,
 
+		sound			=> filtered_8580,
+		valid			=> open
+	);
+	
+	u_filt_8580 	<= std_logic_vector(filtered_8580 + "1000000000000000000");
+	u_audio_8580	<= u_filt_8580(18 downto 1);
+	audio_8580		<= u_audio_8580;
+	
+--------------------------------------------------------------------------------
 -- Register decoding
+--------------------------------------------------------------------------------
 	register_decoder:process(clk32)
 	begin
 		if rising_edge(clk32) then
@@ -342,7 +512,7 @@ begin
 							when "11001" =>	do_buf	<= pot_x;
 							when "11010" =>	do_buf	<= pot_y;
 							when "11011" =>	do_buf	<= Misc_Osc3_Random;
-							when "11100" =>	do_buf	<= Misc_Env3;
+							when "11100" =>	do_buf	<= Misc_6581_Env3;   -- TODO
 							--------------------------------------
 	--						when others	=>	null;
 							when others	=>	do_buf <= (others => '0');

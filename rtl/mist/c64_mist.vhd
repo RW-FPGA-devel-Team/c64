@@ -116,9 +116,10 @@ constant CONF_STR : string :=
 	"P1O89,Scandoubler Fx,None,CRT 25%,CRT 50%,CRT 75%;"&
 	"P1O2,Video standard,PAL,NTSC;"&
 	"P1OI,Tape sound,Off,On;"&
-	"P1ODF,SID,6581 Mono,6581 Stereo,8580 Mono,8580 Stereo,Pseudo Stereo;"&
+	"P1OD,Left  SID,6581,8580;"&
+	"P1OE,Right SID,6581,8580;"&
+--	"P1OF,Right SID Addr,$D420,$D500;"&
 	"P1O6,Audio filter,On,Off;"&
-	"P1OJ,Digimax,Off,On;" &
 	"P1OK,SID digi to DM,Off,On;" &
 	"P2O3,Joysticks,Normal,Swapped;"&
 	"P2OG,Disk Write,Enable,Disable;"&
@@ -198,7 +199,7 @@ end  component dac;
 component LPFilter is 
 generic
  ( clkspeed   : integer := 2700000;
-   filterfreq : integer := 443
+   filterfreq : integer := 1500
  );
 port
  (
@@ -1040,26 +1041,9 @@ port map(
               outSound => compressed_r
 );
 
---
---	dac : sigma_delta_dac
---	port map (
---		clk => clk_c64,
---		ldatasum => audio_data_l_mix,
---		rdatasum => audio_data_r,
---		aleft => AUDIO_L,
---		aright => AUDIO_R
---	);
 
---		compressor_g : compressor
---		port map(
---					clk => clk_c64,
---					in1 => audio_data_l_mix(17 downto 6),
---					in2 => audio_data_r (17 downto 6),
---					out1=> compressed_l,
---					out2=> compressed_r
---		);
 
-		audio_dac_r <= compressed_l when st_audio_filter_off='0' else audio_data_r;
+		audio_dac_r <= compressed_r when st_audio_filter_off='0' else audio_data_r;
 		audio_dac_l <= compressed_l when st_audio_filter_off='0' else audio_data_l_mix;
 		
 		dac_l : dac
@@ -1128,8 +1112,11 @@ port map(
 		audio_data_r => audio_data_r,
 		extfilter_en => '0', --not st_audio_filter_off,
 		dm_enable    => st_dm,
-		digi_sid_dm  => st_sid_dm,
-		sid_mode => st_sid_mode,
+		
+		sid_left   => status(13),
+		sid_right  => status(14),
+		right_addr   => status(15),
+		
 		iec_data_o => c64_iec_data_o,
 		iec_atn_o  => c64_iec_atn_o,
 		iec_clk_o  => c64_iec_clk_o,

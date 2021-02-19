@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 --
---                                 SID 6581 (voice)
+--                                 SID 8580 (voice)
 --
 --     This piece of VHDL code describes a single SID voice (sound channel)
 --
@@ -17,7 +17,7 @@ library IEEE;
 
 -------------------------------------------------------------------------------
 
-entity sid6581_voice is
+entity sid8580_voice is
 	port (
 		clk_1MHz			: in	std_logic;							-- this line drives the oscilator
 		reset				: in	std_logic;							-- active high signal (i.e. registers are reset when reset=1)
@@ -30,13 +30,23 @@ entity sid6581_voice is
 		Sus_Rel			: in	std_logic_vector(7 downto 0);	-- sustain-release register
 		PA_MSB_in		: in	std_logic;							-- Phase Accumulator MSB input
 		PA_MSB_out		: out	std_logic;							-- Phase Accumulator MSB output
+		
+		w_st_out  		: in std_logic_vector(7 downto 0);
+		w_p_t_out  		: in std_logic_vector(7 downto 0);
+		w_ps_out  		: in std_logic_vector(7 downto 0);
+		w_pst_out  		: in std_logic_vector(7 downto 0);
+		
+		triangle  		: buffer std_logic_vector(11 downto 0);
+		sawtooth  		: buffer std_logic_vector(11 downto 0);
+
+
 		Osc				: out	std_logic_vector(7 downto 0);	-- Voice waveform register
 		Env				: out	std_logic_vector(7 downto 0);	-- Voice envelope register
 		voice				: out	std_logic_vector(11 downto 0)	-- Voice waveform, this is the actual audio signal
 	);
-end sid6581_voice;
+end sid8580_voice;
 
-architecture Behavioral of sid6581_voice is	
+architecture Behavioral of sid8580_voice is	
 
 -------------------------------------------------------------------------------
 --	Altera multiplier
@@ -67,17 +77,14 @@ architecture Behavioral of sid6581_voice is
 
 	-- this type of signal has only two states 0 or 1 (so no more bits are required)
 	signal	pulse							: std_logic := '0';
-	signal	sawtooth						: std_logic_vector(11 downto 0) := (others => '0');
-	signal	triangle						: std_logic_vector(11 downto 0) := (others => '0');
+--	signal	sawtooth						: std_logic_vector(11 downto 0) := (others => '0');
+--	signal	triangle						: std_logic_vector(11 downto 0) := (others => '0');
 	signal	noise							: std_logic_vector(11 downto 0) := (others => '0');
 	signal	LFSR							: std_logic_vector(22 downto 0) := (others => '0');
 
 	signal 	frequency					: std_logic_vector(15 downto 0) := (others => '0');
 	signal 	pulsewidth					: std_logic_vector(11 downto 0) := (others => '0');
 
-	-- Temporary signals
-	signal   has_wave                : std_logic;
-	signal   has_noise               : std_logic;
 	-- Envelope Generator
 	type		envelope_state_types is 	(idle, attack, attack_lp, decay, decay_lp, sustain, release, release_lp);
 	signal 	cur_state, next_state	: envelope_state_types; 
@@ -100,6 +107,7 @@ architecture Behavioral of sid6581_voice is
 	signal	signal_mux					: std_logic_vector(11 downto 0) := (others => '0');
 	signal	signal_vol					: std_logic_vector(19 downto 0) := (others => '0');
 
+
 	-------------------------------------------------------------------------------------
 
 	-- stop the oscillator when test = '1'
@@ -114,6 +122,18 @@ architecture Behavioral of sid6581_voice is
 	alias		sync							: std_logic is Control(1);
 	--
 	alias		gate							: std_logic is Control(0);
+	
+	function repeat(N: natural; B: std_logic)
+	  return std_logic_vector
+     is
+     variable result: std_logic_vector(1 to N);
+     begin
+       for i in 1 to N loop
+       result(i) := B;
+     end loop;
+     return result;
+   end;
+
 
 -------------------------------------------------------------------------------------
 
@@ -247,7 +267,7 @@ begin
 				accu_bit_prev		<= '0';
 				-- the "seed" value (the value that eventually determines the output
 				-- pattern) may never be '0' otherwise the generator "locks up"
-				LFSR	<= "00000000000000000000001";
+				LFSR	<= "11111111111111111111111";
 		else
 			accu_bit_prev	<= accumulator(19);
 			-- when not equal to ...
@@ -272,60 +292,38 @@ begin
 	-- with zeroes."
 	--
 
+
+
+
+
+	
 	Snd_select:process(clk_1MHz)
 	begin
 		if (rising_edge(clk_1MHz)) then 
-		   has_wave <= control(4) or control(5) or control(6);
-			has_noise <= control(7);
-			if ((has_wave and has_noise) ='1') then 
-			  signal_mux(11) <= '0';
-			  signal_mux(10) <= '0';
-			  signal_mux(9) <= '0';
-			  signal_mux(8) <= '0';
-			  signal_mux(7) <= '0';
-			  signal_mux(6) <= '0';
-			  signal_mux(5) <= '0';
-			  signal_mux(4) <= '0';
-			  signal_mux(3) <= '0';
-			  signal_mux(2) <= '0';
-			  signal_mux(1) <= '0';
-			  signal_mux(0) <= '0'; 
+	   	if reset = '1' then
+				signal_mux <= (others => '0');
 			else
-			  
-				signal_mux(11) <= ((triangle(11) and Control(4)) or (sawtooth(11) and Control(5)) or (pulse and Control(6))) or (noise(11) and Control(7));
-				signal_mux(10) <= ((triangle(10) and Control(4)) or (sawtooth(10) and Control(5)) or (pulse and Control(6))) or (noise(10) and Control(7));
-				signal_mux(9)  <= ((triangle(9)  and Control(4)) or (sawtooth(9)  and Control(5)) or (pulse and Control(6))) or (noise(9)  and Control(7));
-				signal_mux(8)  <= ((triangle(8)  and Control(4)) or (sawtooth(8)  and Control(5)) or (pulse and Control(6))) or (noise(8)  and Control(7));
-				signal_mux(7)  <= ((triangle(7)  and Control(4)) or (sawtooth(7)  and Control(5)) or (pulse and Control(6))) or (noise(7)  and Control(7));
-				signal_mux(6)  <= ((triangle(6)  and Control(4)) or (sawtooth(6)  and Control(5)) or (pulse and Control(6))) or (noise(6)  and Control(7));
-				signal_mux(5)  <= ((triangle(5)  and Control(4)) or (sawtooth(5)  and Control(5)) or (pulse and Control(6))) or (noise(5)  and Control(7));
-				signal_mux(4)  <= ((triangle(4)  and Control(4)) or (sawtooth(4)  and Control(5)) or (pulse and Control(6))) or (noise(4)  and Control(7));
-				signal_mux(3)  <= ((triangle(3)  and Control(4)) or (sawtooth(3)  and Control(5)) or (pulse and Control(6))) or (noise(3)  and Control(7));
-				signal_mux(2)  <= ((triangle(2)  and Control(4)) or (sawtooth(2)  and Control(5)) or (pulse and Control(6))) or (noise(2)  and Control(7));
-				signal_mux(1)  <= ((triangle(1)  and Control(4)) or (sawtooth(1)  and Control(5)) or (pulse and Control(6))) or (noise(1)  and Control(7));
-				signal_mux(0)  <= ((triangle(0)  and Control(4)) or (sawtooth(0)  and Control(5)) or (pulse and Control(6))) or (noise(0)  and Control(7));
+			   
+				case control(7 downto 4) is
+				 when "0001" => signal_mux <= triangle;
+				 when "0010" => signal_mux <= sawtooth;
+				 when "0011" => signal_mux <= w_st_out & "0000";
+				 when "0100" => signal_mux <= (others => pulse);
+				 when "0101" => signal_mux <=  (w_p_t_out & "0000")and repeat(12,pulse);
+				 when "0110" => signal_mux <= (w_ps_out & "0000")  and repeat(12,pulse);
+				 when "0111" => signal_mux <= (w_pst_out& "0000")  and repeat(12,pulse);
+				 when "1000" => signal_mux <= noise;
+				 when others => signal_mux <= (others => '0');
+				end case; 
 			end if;
 		end if;
 	end process;
+
+	
+
 	
 	
---	Snd_select:process(clk_1MHz)
---	begin
---		if (rising_edge(clk_1MHz)) then 
---			signal_mux(11) <= ((triangle(11) and Control(4)) or (sawtooth(11) and Control(5)) or (pulse and Control(6))) xor (noise(11) and Control(7));
---			signal_mux(10) <= ((triangle(10) and Control(4)) or (sawtooth(10) and Control(5)) or (pulse and Control(6))) xor (noise(10) and Control(7));
---			signal_mux(9)  <= ((triangle(9)  and Control(4)) or (sawtooth(9)  and Control(5)) or (pulse and Control(6))) xor (noise(9)  and Control(7));
---			signal_mux(8)  <= ((triangle(8)  and Control(4)) or (sawtooth(8)  and Control(5)) or (pulse and Control(6))) xor (noise(8)  and Control(7));
---			signal_mux(7)  <= ((triangle(7)  and Control(4)) or (sawtooth(7)  and Control(5)) or (pulse and Control(6))) xor (noise(7)  and Control(7));
---			signal_mux(6)  <= ((triangle(6)  and Control(4)) or (sawtooth(6)  and Control(5)) or (pulse and Control(6))) xor (noise(6)  and Control(7));
---			signal_mux(5)  <= ((triangle(5)  and Control(4)) or (sawtooth(5)  and Control(5)) or (pulse and Control(6))) xor (noise(5)  and Control(7));
---			signal_mux(4)  <= ((triangle(4)  and Control(4)) or (sawtooth(4)  and Control(5)) or (pulse and Control(6))) xor (noise(4)  and Control(7));
---			signal_mux(3)  <= ((triangle(3)  and Control(4)) or (sawtooth(3)  and Control(5)) or (pulse and Control(6))) xor (noise(3)  and Control(7));
---			signal_mux(2)  <= ((triangle(2)  and Control(4)) or (sawtooth(2)  and Control(5)) or (pulse and Control(6))) xor (noise(2)  and Control(7));
---			signal_mux(1)  <= ((triangle(1)  and Control(4)) or (sawtooth(1)  and Control(5)) or (pulse and Control(6))) xor (noise(1)  and Control(7));
---			signal_mux(0)  <= ((triangle(0)  and Control(4)) or (sawtooth(0)  and Control(5)) or (pulse and Control(6))) xor (noise(0)  and Control(7));
---		end if;
---	end process;
+
 	
 	-- Waveform envelope (volume) control :
 	-- "The output of the Waveform D/A (which was an analog voltage at this point)

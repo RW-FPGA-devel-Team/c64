@@ -343,8 +343,8 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
-set_location_assignment PIN_D1 -to UART_TX
 set_location_assignment PIN_B1 -to UART_RX
+set_location_assignment PIN_P1 -to TAPE_IN
 set_location_assignment PLL_1 -to pll|altpll_component|auto_generated|pll1
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to UART_TX
 
@@ -384,7 +384,6 @@ set_global_assignment -name VHDL_FILE rtl/c1541/gen_rom.vhd
 set_global_assignment -name VHDL_FILE rtl/c1541/gcr_floppy.vhd
 set_global_assignment -name VHDL_FILE rtl/c1541/c1541_sd.vhd
 set_global_assignment -name VHDL_FILE rtl/c1541/c1541_logic.vhd
-set_global_assignment -name VHDL_FILE rtl/mist/c64_mist.vhd
 set_global_assignment -name VERILOG_FILE rtl/mist/sigma_delta_dac.v
 set_global_assignment -name VERILOG_FILE rtl/mist/sdram.v
 set_global_assignment -name QIP_FILE rtl/T65/T65.qip
@@ -395,4 +394,5 @@ set_global_assignment -name QIP_FILE rtl/mist/pll_c64_reconfig.qip
 set_global_assignment -name QIP_FILE rtl/mist/rom_reconfig_pal.qip
 set_global_assignment -name QIP_FILE rtl/mist/rom_reconfig_ntsc.qip
 set_global_assignment -name VERILOG_FILE rtl/DigiMax.v
+set_global_assignment -name VHDL_FILE rtl/mist/c64_sidi.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

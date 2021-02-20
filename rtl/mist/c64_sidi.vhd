@@ -74,6 +74,7 @@ entity c64_mist is port
    CONF_DATA0 : in    std_logic;
 
    UART_RX    : in    std_logic;
+	TAPE_IN    : in    std_logic;
    UART_TX    : out   std_logic
 
 );
@@ -1343,8 +1344,8 @@ port map(
 		cass_motor => cass_motor,
 		cass_sense => cass_sense,
 		osd_play_stop_toggle => st_tap_play_btn or tap_playstop_key,
-		ear_input => uart_rxD2 and not st_user_port_uart
-		--ear_input => TAPE_IN
+		--ear_input => uart_rxD2 and not st_user_port_uart
+		ear_input => TAPE_IN
 		
 	);
 

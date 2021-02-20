@@ -114,6 +114,7 @@ constant CONF_STR : string :=
 	"P1,Video & Audio;"&
 	"P2,System;"&
 	"P1O89,Scandoubler Fx,None,CRT 25%,CRT 50%,CRT 75%;"&
+	"P1OUV,Color Palette,C64,CePeCe,Pepto,Comunity;"&
 	"P1O2,Video standard,PAL,NTSC;"&
 	"P1OI,Tape sound,Off,On;"&
 	"P1OD,Left  SID,6581,8580;"&
@@ -1074,6 +1075,7 @@ port map(
 		romAddr => c64_rom_addr,
 		romCE => rom_ce,
 		ntscInitMode => ntsc_init_mode,
+		palette => status(31 downto 30),
 		hsync => hsync,
 		vsync => vsync,
 		r => r,

@@ -138,13 +138,37 @@ architecture Behavioral of sid6581 is
 	signal u_filt_8580		: std_logic_vector(18 downto 0);
 	signal ff1					: std_logic;
 	
-   signal sawtooth 			: std_logic_vector(11 downto 0);
-	signal triangle 			: std_logic_vector(11 downto 0);
- 	signal w_st_out  			: std_logic_vector(7 downto 0);
-	signal w_p_t_out  		: std_logic_vector(7 downto 0);
-	signal w_ps_out  			: std_logic_vector(7 downto 0);
-	signal w_pst_out  		: std_logic_vector(7 downto 0);
+   signal sawtooth_1			: std_logic_vector(11 downto 0);
+	signal triangle_1			: std_logic_vector(11 downto 0);
+   signal sawtooth_2			: std_logic_vector(11 downto 0);
+	signal triangle_2			: std_logic_vector(11 downto 0);
+   signal sawtooth_3			: std_logic_vector(11 downto 0);
+	signal triangle_3			: std_logic_vector(11 downto 0);
 
+   signal f_sawtooth 			: std_logic_vector(11 downto 0);
+	signal f_triangle 			: std_logic_vector(11 downto 0);
+
+ 	signal w_st_out_1 		: std_logic_vector(7 downto 0);
+	signal w_p_t_out_1  		: std_logic_vector(7 downto 0);
+	signal w_ps_out_1 		: std_logic_vector(7 downto 0);
+	signal w_pst_out_1  		: std_logic_vector(7 downto 0);
+
+  	signal w_st_out_2  		: std_logic_vector(7 downto 0);
+	signal w_p_t_out_2  		: std_logic_vector(7 downto 0);
+	signal w_ps_out_2  		: std_logic_vector(7 downto 0);
+	signal w_pst_out_2  		: std_logic_vector(7 downto 0);
+
+  	signal w_st_out_3  		: std_logic_vector(7 downto 0);
+	signal w_p_t_out_3  		: std_logic_vector(7 downto 0);
+	signal w_ps_out_3  		: std_logic_vector(7 downto 0);
+	signal w_pst_out_3  		: std_logic_vector(7 downto 0);
+
+ 	signal f_st_out  			: std_logic_vector(7 downto 0);
+	signal f_p_t_out  		: std_logic_vector(7 downto 0);
+	signal f_ps_out  			: std_logic_vector(7 downto 0);
+	signal f_pst_out  		: std_logic_vector(7 downto 0);
+
+	signal t_state : integer range 0 to 16; -- stage counter 0-16;
 	
 	
 	component sid_tables
@@ -224,12 +248,12 @@ begin
 	tablas : sid_tables
 	port map (
 	   clock    => clk_1MHz,
-		sawtooth => sawtooth,
-		triangle => triangle,
-		w_st_out  => w_st_out,
-		w_p_t_out => w_p_t_out,
-		w_ps_out  => w_ps_out,
-		w_pst_out => w_pst_out
+		sawtooth => f_sawtooth,
+		triangle => f_triangle,
+		w_st_out  => f_st_out,
+		w_p_t_out => f_p_t_out,
+		w_ps_out  => f_ps_out,
+		w_pst_out => f_pst_out
 	);
 
 
@@ -249,12 +273,12 @@ begin
 		Osc					=> Voice_1_Osc,
 		Env					=> Voice_1_Env,
 
-		sawtooth 			=> sawtooth,
-		triangle 			=> triangle,
-		w_st_out 			=> w_st_out,
-		w_p_t_out 			=> w_p_t_out,
-		w_ps_out  			=> w_ps_out,
-		w_pst_out 			=> w_pst_out,
+		sawtooth 			=> sawtooth_1,
+		triangle 			=> triangle_1,
+		w_st_out 			=> w_st_out_1,
+		w_p_t_out 			=> w_p_t_out_1,
+		w_ps_out  			=> w_ps_out_1,
+		w_pst_out 			=> w_pst_out_1,
 	
 		voice					=> voice_8580_1
 	);
@@ -275,12 +299,12 @@ begin
 		Osc					=> Voice_2_Osc,
 		Env					=> Voice_2_Env,
 		
-		sawtooth 			=> open,
-		triangle 			=> open,
-		w_st_out 			=> w_st_out,
-		w_p_t_out 			=> w_p_t_out,
-		w_ps_out  			=> w_ps_out,
-		w_pst_out 			=> w_pst_out,
+		sawtooth 			=> sawtooth_2,
+		triangle 			=> triangle_2,
+		w_st_out 			=> w_st_out_2,
+		w_p_t_out 			=> w_p_t_out_2,
+		w_ps_out  			=> w_ps_out_2,
+		w_pst_out 			=> w_pst_out_2,
 
 		voice					=> voice_8580_2
 	);
@@ -301,12 +325,12 @@ begin
 		Osc					=> open, --Misc_Osc3_Random,
 		Env					=> Misc_8580_Env3,
 		
-		sawtooth 			=> open,
-		triangle 			=> open,
-		w_st_out 			=> w_st_out,
-		w_p_t_out 			=> w_p_t_out,
-		w_ps_out  			=> w_ps_out,
-		w_pst_out 			=> w_pst_out,
+		sawtooth 			=> sawtooth_3,
+		triangle 			=> triangle_3,
+		w_st_out 			=> w_st_out_3,
+		w_p_t_out 			=> w_p_t_out_3,
+		w_ps_out  			=> w_ps_out_3,
+		w_pst_out 			=> w_pst_out_3,
 
 		voice					=> voice_8580_3
 	);
@@ -335,6 +359,40 @@ begin
 		end if;
 	end process;
 
+	process (clk32)
+	begin
+	 
+	 if clk_1MHz = '1' then
+	   t_state <= 0;
+	 end if;
+	 t_state<=t_state+1;
+	 
+	 case t_state is
+		when 1 => f_sawtooth <= sawtooth_1;
+					 f_triangle <= triangle_1;
+		when 5 => f_sawtooth <= sawtooth_2;
+					 f_triangle <= triangle_2;
+  		when 9 => f_sawtooth <= sawtooth_3;
+					 f_triangle <= triangle_3;
+		when 3 => w_st_out_1 <= f_st_out;
+		          w_p_t_out_1 <= f_p_t_out;
+		          w_ps_out_1  <= f_ps_out;
+		          w_pst_out_1 <= f_pst_out;
+		when 7 => w_st_out_2 <= f_st_out;
+		          w_p_t_out_2 <= f_p_t_out;
+		          w_ps_out_2  <= f_ps_out;
+		          w_pst_out_2 <= f_pst_out;
+		when 11 => w_st_out_3 <= f_st_out;
+		          w_p_t_out_3 <= f_p_t_out;
+		          w_ps_out_3  <= f_ps_out;
+		          w_pst_out_3 <= f_pst_out;
+							 
+	   when others => f_sawtooth <= f_sawtooth;
+	 end case; 
+   		
+	  
+	end process;
+	
 	input_valid <= '1' when tick_q1 /=tick_q2 else '0';
 
 	v6581_1_signed <= signed("0" & voice_6581_1) - 2048;

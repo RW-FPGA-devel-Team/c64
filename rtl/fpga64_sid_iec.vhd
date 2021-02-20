@@ -108,7 +108,9 @@ entity fpga64_sid_iec is
 		right_addr  : in std_logic;
 		-- DigiMax
 		dm_enable   : in std_logic;
-		
+		--Palette
+		palette       : in std_logic_vector(1 downto 0);
+
 		-- IEC
 		iec_data_o	: out std_logic;
 		iec_data_i	: in  std_logic;
@@ -421,7 +423,8 @@ begin
 			index => vicColorIndex,
 			r => r,
 			g => g,
-			b => b
+			b => b,
+			palette => palette
 		);
 -- -----------------------------------------------------------------------
 -- Color RAM

@@ -349,6 +349,7 @@ set_location_assignment PLL_1 -to pll|altpll_component|auto_generated|pll1
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to UART_TX
 
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to UART_RX
+set_global_assignment -name VERILOG_FILE rtl/sid6581/sid_tables.v
 set_global_assignment -name VHDL_FILE rtl/sid6581/sid_voice_8580.vhd
 set_global_assignment -name VHDL_FILE rtl/sid6581/sid_voice_6501.vhd
 set_global_assignment -name VHDL_FILE rtl/sid6581/sid_filters_6581.vhd

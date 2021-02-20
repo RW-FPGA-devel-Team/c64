@@ -120,7 +120,7 @@ constant CONF_STR : string :=
 	"P1OE,Right SID,6581,8580;"&
 --	"P1OF,Right SID Addr,$D420,$D500;"&
 	"P1O6,Audio filter,On,Off;"&
-	"P1OK,SID digi to DM,Off,On;" &
+	"P1OJ,DigiMax,Off,On;" &
 	"P2O3,Joysticks,Normal,Swapped;"&
 	"P2OG,Disk Write,Enable,Disable;"&
 	"P2O7,Userport,4-player IF,UART;"&

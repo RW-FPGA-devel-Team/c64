@@ -36,7 +36,7 @@ architecture beh of sid8580_filters is
 	alias hp_bp_lp    : std_logic_vector(2 downto 0) is Mode_Vol(6 downto 4);
 	alias voice3off   : std_logic is Mode_Vol(7);
 
-	constant mixer_DC : integer := 0; -- NOTE to self: this might be wrong.
+	constant mixer_DC : integer :=  -413; -- NOTE to self: this might be wrong.
 
 	type regs_type is record
 		Vhp   : signed(17 downto 0);
@@ -160,9 +160,9 @@ begin
 				w.state := 5;
 				-- 4th accumulation
 				if filt(3)='1' then
-					w.vi := r.vi +   s13_to_18("0000000000000");
+					w.vi := r.vi +   s13_to_18(ext_in);
 				else
-					w.vnf := r.vnf + s13_to_18("0000000000000");
+					w.vnf := r.vnf + s13_to_18(ext_in);
 				end if;
 				w.dVlp := mulr(35) & mulr(35 downto 19);
 				w.Vbp := r.Vbp - r.dVbp;
@@ -209,6 +209,7 @@ begin
 			when 10 =>
 				w.state := 11;
 				-- Add mixer DC
+				
 				w.Vf := r.Vf + to_signed(mixer_DC, r.Vf'LENGTH);
 
 			when 11 =>
@@ -216,6 +217,8 @@ begin
 				-- Process volume
 				mulen <= '1';
 				mula <= r.Vf;
+				--mula <= r.Vnf - r.Vf;
+			   --mula <= r.Vnf + r.Vi;
 				mulb <= (others => '0');
 				mulb(3 downto 0) <= signed(volume);
 

@@ -1046,8 +1046,8 @@ port map(
 
 
 
-		audio_dac_r <= compressed_r when st_audio_filter_off='0' else audio_data_r;
-		audio_dac_l <= compressed_l when st_audio_filter_off='0' else audio_data_l_mix;
+		audio_dac_r <= compressed_r when st_audio_filter_off='1' else audio_data_r;
+		audio_dac_l <= compressed_l when st_audio_filter_off='1' else audio_data_l_mix;
 		
 		dac_l : dac
 		port map(

@@ -69,6 +69,7 @@ architecture Behavioral of sid6581_voice is
 	signal	pulse							: std_logic := '0';
 	signal	sawtooth						: std_logic_vector(11 downto 0) := (others => '0');
 	signal	triangle						: std_logic_vector(11 downto 0) := (others => '0');
+	signal	w_pulse						: std_logic_vector(11 downto 0) := (others => '0');
 	signal	noise							: std_logic_vector(11 downto 0) := (others => '0');
 	signal	LFSR							: std_logic_vector(22 downto 0) := (others => '0');
 
@@ -173,16 +174,35 @@ begin
 	-- accumulator to a 12-bit digital comparator. The output of the comparator was
 	-- either a one or a zero. This single output was then sent to all 12 bits of
 	-- the Waveform D/A. "
-	Snd_pulse:process(clk_1MHz)
+
+   Snd_pulse:process(clk_1MHz)
 	begin
 		if (rising_edge(clk_1MHz)) then
+		  if (test = '1') then
+		    w_pulse <= "111111111111";
+			 pulse <= '1';
+		  else
 			if ((accumulator(23 downto 12)) >= pulsewidth) then
 				pulse <= '1';
+				w_pulse <= "111111111111";
 			else
 				pulse <= '0';
+				w_pulse <="000000000000";
 			end if;
+		  end if;
 		end if;
-	end process;
+	end process;	
+	
+--	Snd_pulse:process(clk_1MHz)
+--	begin
+--		if (rising_edge(clk_1MHz)) then
+--			if ((accumulator(23 downto 12)) >= pulsewidth) then
+--				pulse <= '1';
+--			else
+--				pulse <= '0';
+--			end if;
+--		end if;
+--	end process;
 
 	--Triangle waveform :
 	-- "The Triangle waveform was created by using the MSB of the accumulator to
@@ -272,42 +292,73 @@ begin
 	-- with zeroes."
 	--
 
-	Snd_select:process(clk_1MHz)
+		Snd_select:process(clk_1MHz)
 	begin
 		if (rising_edge(clk_1MHz)) then 
-		   has_wave <= control(4) or control(5) or control(6);
-			has_noise <= control(7);
-			if ((has_wave and has_noise) ='1') then 
-			  signal_mux(11) <= 'Z';
-			  signal_mux(10) <= 'Z';
-			  signal_mux(9) <= 'Z';
-			  signal_mux(8) <= 'Z';
-			  signal_mux(7) <= 'Z';
-			  signal_mux(6) <= 'Z';
-			  signal_mux(5) <= 'Z';
-			  signal_mux(4) <= 'Z';
-			  signal_mux(3) <= 'Z';
-			  signal_mux(2) <= 'Z';
-			  signal_mux(1) <= 'Z';
-			  signal_mux(0) <= 'Z'; 
+	   	if reset = '1' or test = '1' then
+				signal_mux <= (others => 'Z');
 			else
-   		  signal_mux(11) <= ((triangle(11) and Control(4)) or (sawtooth(11) and Control(5)) or (pulse and Control(6))) or (noise(11) and Control(7));
-			  signal_mux(10) <= ((triangle(10) and Control(4)) or (sawtooth(10) and Control(5)) or (pulse and Control(6))) or (noise(10) and Control(7));
-			  signal_mux(9)  <= ((triangle(9)  and Control(4)) or (sawtooth(9)  and Control(5)) or (pulse and Control(6))) or (noise(9)  and Control(7));
-			  signal_mux(8)  <= ((triangle(8)  and Control(4)) or (sawtooth(8)  and Control(5)) or (pulse and Control(6))) or (noise(8)  and Control(7));
-			  signal_mux(7)  <= ((triangle(7)  and Control(4)) or (sawtooth(7)  and Control(5)) or (pulse and Control(6))) or (noise(7)  and Control(7));
-			  signal_mux(6)  <= ((triangle(6)  and Control(4)) or (sawtooth(6)  and Control(5)) or (pulse and Control(6))) or (noise(6)  and Control(7));
-			  signal_mux(5)  <= ((triangle(5)  and Control(4)) or (sawtooth(5)  and Control(5)) or (pulse and Control(6))) or (noise(5)  and Control(7));
-			  signal_mux(4)  <= ((triangle(4)  and Control(4)) or (sawtooth(4)  and Control(5)) or (pulse and Control(6))) or (noise(4)  and Control(7));
-			  signal_mux(3)  <= ((triangle(3)  and Control(4)) or (sawtooth(3)  and Control(5)) or (pulse and Control(6))) or (noise(3)  and Control(7));
-			  signal_mux(2)  <= ((triangle(2)  and Control(4)) or (sawtooth(2)  and Control(5)) or (pulse and Control(6))) or (noise(2)  and Control(7));
-			  signal_mux(1)  <= ((triangle(1)  and Control(4)) or (sawtooth(1)  and Control(5)) or (pulse and Control(6))) or (noise(1)  and Control(7));
-			  signal_mux(0)  <= ((triangle(0)  and Control(4)) or (sawtooth(0)  and Control(5)) or (pulse and Control(6))) or (noise(0)  and Control(7));
+			   
+				case control(7 downto 4) is
+--				 when "0000" => signal_mux <= (others => '0');
+				 when "0001" => signal_mux <= triangle;
+				 when "0010" => signal_mux <= sawtooth;
+				 when "0011" => signal_mux <= sawtooth and triangle;
+				 when "0100" => signal_mux <= w_pulse;
+				 when "0101" => signal_mux <= triangle and w_pulse;
+				 when "0110" => signal_mux <= w_pulse  and sawtooth;
+				 when "0111" => signal_mux <= sawtooth and triangle and w_pulse;
+				 when "1000" => signal_mux <= noise;
+				 when "1001" => signal_mux <= triangle              and noise ;
+				 when "1010" => signal_mux <= sawtooth              and noise;
+				 when "1011" => signal_mux <= sawtooth and triangle and noise;
+				 when "1100" => signal_mux <= w_pulse               and noise;
+				 when "1101" => signal_mux <= triangle and w_pulse  and noise;
+				 when "1110" => signal_mux <= sawtooth and w_pulse  and noise;
+				 when "1111" => signal_mux <= sawtooth and triangle and w_pulse and noise;
+				 when others => null;
+				end case; 
 			end if;
 		end if;
 	end process;
 	
 	
+--	Snd_select:process(clk_1MHz)
+--	begin
+--		if (rising_edge(clk_1MHz)) then 
+--		   has_wave <= control(4) or control(5) or control(6);
+--			has_noise <= control(7);
+--			if ((has_wave and has_noise) ='1') then 
+--			  signal_mux(11) <= 'Z';
+--			  signal_mux(10) <= 'Z';
+--			  signal_mux(9) <= 'Z';
+--			  signal_mux(8) <= 'Z';
+--			  signal_mux(7) <= 'Z';
+--			  signal_mux(6) <= 'Z';
+--			  signal_mux(5) <= 'Z';
+--			  signal_mux(4) <= 'Z';
+--			  signal_mux(3) <= 'Z';
+--			  signal_mux(2) <= 'Z';
+--			  signal_mux(1) <= 'Z';
+--			  signal_mux(0) <= 'Z'; 
+--			else
+--   		  signal_mux(11) <= ((triangle(11) and Control(4)) or (sawtooth(11) and Control(5)) or (pulse and Control(6))) or (noise(11) and Control(7));
+--			  signal_mux(10) <= ((triangle(10) and Control(4)) or (sawtooth(10) and Control(5)) or (pulse and Control(6))) or (noise(10) and Control(7));
+--			  signal_mux(9)  <= ((triangle(9)  and Control(4)) or (sawtooth(9)  and Control(5)) or (pulse and Control(6))) or (noise(9)  and Control(7));
+--			  signal_mux(8)  <= ((triangle(8)  and Control(4)) or (sawtooth(8)  and Control(5)) or (pulse and Control(6))) or (noise(8)  and Control(7));
+--			  signal_mux(7)  <= ((triangle(7)  and Control(4)) or (sawtooth(7)  and Control(5)) or (pulse and Control(6))) or (noise(7)  and Control(7));
+--			  signal_mux(6)  <= ((triangle(6)  and Control(4)) or (sawtooth(6)  and Control(5)) or (pulse and Control(6))) or (noise(6)  and Control(7));
+--			  signal_mux(5)  <= ((triangle(5)  and Control(4)) or (sawtooth(5)  and Control(5)) or (pulse and Control(6))) or (noise(5)  and Control(7));
+--			  signal_mux(4)  <= ((triangle(4)  and Control(4)) or (sawtooth(4)  and Control(5)) or (pulse and Control(6))) or (noise(4)  and Control(7));
+--			  signal_mux(3)  <= ((triangle(3)  and Control(4)) or (sawtooth(3)  and Control(5)) or (pulse and Control(6))) or (noise(3)  and Control(7));
+--			  signal_mux(2)  <= ((triangle(2)  and Control(4)) or (sawtooth(2)  and Control(5)) or (pulse and Control(6))) or (noise(2)  and Control(7));
+--			  signal_mux(1)  <= ((triangle(1)  and Control(4)) or (sawtooth(1)  and Control(5)) or (pulse and Control(6))) or (noise(1)  and Control(7));
+--			  signal_mux(0)  <= ((triangle(0)  and Control(4)) or (sawtooth(0)  and Control(5)) or (pulse and Control(6))) or (noise(0)  and Control(7));
+--			end if;
+--		end if;
+--	end process;
+--	
+--	
 
 	
 	-- Waveform envelope (volume) control :
@@ -456,7 +507,7 @@ begin
 					if gate = '0' then	
 						next_state 			<= release;
 					else
-						if (env_counter(7 downto 4) = Sus_Rel(7 downto 4)) then
+					   if (env_counter(7 downto 4) = Sus_Rel(7 downto 4)) then
 							next_state 		<= sustain;
 						else
 							next_state 		<= decay;
@@ -633,7 +684,7 @@ begin
 				divider_dec_rel <= 0;
 			else
 				case Dec_rel is
-					when "0000" =>	divider_dec_rel <= 3;			--release rate: (    6mS / 1uS per clockcycle) / 1632
+					when "0000" =>	divider_dec_rel <= 3;		--release rate: (    6mS / 1uS per clockcycle) / 1632
 					when "0001" =>	divider_dec_rel <= 15;		--release rate: (   24mS / 1uS per clockcycle) / 1632
 					when "0010" =>	divider_dec_rel <= 29;		--release rate: (   48mS / 1uS per clockcycle) / 1632
 					when "0011" =>	divider_dec_rel <= 44;		--release rate: (   72mS / 1uS per clockcycle) / 1632

@@ -126,7 +126,7 @@ architecture Behavioral of sid6581 is
 	signal v8580_2_signed		: signed(12 downto 0);
 	signal v8580_3_signed		: signed(12 downto 0);
 	
-	constant ext_in_signed	: signed(12 downto 0) := to_signed(0,13);
+	constant ext_in_signed	: signed(12 downto 0) := to_signed(-1024,13);
 
 	signal filtered_6581	: signed(18 downto 0);
 	signal filtered_8580	: signed(18 downto 0);
@@ -245,6 +245,7 @@ begin
 	);
 
 ------------------------ SID 8580 voices --------------------------------------
+
 	tablas : sid_tables
 	port map (
 	   clock    => clk_1MHz,
@@ -359,7 +360,7 @@ begin
 		end if;
 	end process;
 
-	process (clk32)
+	process (clk_1MHz)
 	begin
 	 
 	 if clk_1MHz = '1' then
@@ -387,7 +388,7 @@ begin
 		          w_ps_out_3  <= f_ps_out;
 		          w_pst_out_3 <= f_pst_out;
 							 
-	   when others => f_sawtooth <= f_sawtooth;
+	   when others => null;
 	 end case; 
    		
 	  
@@ -459,8 +460,8 @@ begin
 	
 	u_filt_8580 	<= std_logic_vector(filtered_8580 + "1000000000000000000");
 	u_audio_8580	<= u_filt_8580(18 downto 1);
+	--audio_8580		<= voice_8580_3 & "000000"; --u_audio_8580;
 	audio_8580		<= u_audio_8580;
-	
 --------------------------------------------------------------------------------
 -- Register decoding
 --------------------------------------------------------------------------------

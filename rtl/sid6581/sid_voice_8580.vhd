@@ -77,6 +77,7 @@ architecture Behavioral of sid8580_voice is
 
 	-- this type of signal has only two states 0 or 1 (so no more bits are required)
 	signal	pulse							: std_logic := '0';
+	signal   w_pulse                 : std_logic_vector(11 downto 0);
 --	signal	sawtooth						: std_logic_vector(11 downto 0) := (others => '0');
 --	signal	triangle						: std_logic_vector(11 downto 0) := (others => '0');
 	signal	noise							: std_logic_vector(11 downto 0) := (others => '0');
@@ -196,11 +197,18 @@ begin
 	Snd_pulse:process(clk_1MHz)
 	begin
 		if (rising_edge(clk_1MHz)) then
+		  if (test = '1') then
+		    w_pulse <= "111111111111";
+			 pulse <= '1';
+		  else
 			if ((accumulator(23 downto 12)) >= pulsewidth) then
 				pulse <= '1';
+				w_pulse <= "111111111111";
 			else
 				pulse <= '0';
+				w_pulse <="000000000000";
 			end if;
+		  end if;
 		end if;
 	end process;
 
@@ -300,26 +308,56 @@ begin
 	Snd_select:process(clk_1MHz)
 	begin
 		if (rising_edge(clk_1MHz)) then 
-	   	if reset = '1' then
+	   	if (reset = '1' or test='1') then
 				signal_mux <= (others => '0');
 			else
 			   
 				case control(7 downto 4) is
+--				 when "0000" => signal_mux <= (others => '0');
 				 when "0001" => signal_mux <= triangle;
 				 when "0010" => signal_mux <= sawtooth;
 				 when "0011" => signal_mux <= w_st_out & "0000";
-				 when "0100" => signal_mux <= (others => pulse);
-				 when "0101" => signal_mux <=  (w_p_t_out & "0000")and repeat(12,pulse);
-				 when "0110" => signal_mux <= (w_ps_out & "0000")  and repeat(12,pulse);
-				 when "0111" => signal_mux <= (w_pst_out& "0000")  and repeat(12,pulse);
+				 when "0100" => signal_mux <= w_pulse;
+				 when "0101" => signal_mux <= (w_p_t_out & "0000")and w_pulse;
+				 when "0110" => signal_mux <= (w_ps_out & "0000")  and w_pulse;
+				 when "0111" => signal_mux <= (w_pst_out& "0000")  and w_pulse;
 				 when "1000" => signal_mux <= noise;
-				 when others => signal_mux <= (others => '0');
+				 when "1001" => signal_mux <= triangle and noise ;
+				 when "1010" => signal_mux <= sawtooth and noise;
+				 when "1011" => signal_mux <= (w_st_out & "0000") and noise;
+				 when "1100" => signal_mux <= (repeat(12,pulse)) and noise;
+				 when "1101" => signal_mux <= ((w_p_t_out & "0000")and w_pulse)  and noise;
+				 when "1110" => signal_mux <= ((w_ps_out & "0000")  and w_pulse) and noise;
+				 when "1111" => signal_mux <= ((w_pst_out& "0000")  and w_pulse) and noise;
+				 when others => null;
 				end case; 
 			end if;
 		end if;
 	end process;
 
 	
+--	Snd_select:process(clk_1MHz)
+--	begin
+--		if (rising_edge(clk_1MHz)) then 
+--	   	if reset = '1' then
+--				signal_mux <= (others => '0');
+--			else
+--			   
+--				case control(7 downto 4) is
+--				 when "0000" => signal_mux <= (others => '0');
+--				 when "0001" => signal_mux <= triangle;
+--				 when "0010" => signal_mux <= sawtooth;
+--				 when "0011" => signal_mux <= sawtooth or triangle;
+--				 when "0100" => signal_mux <= repeat(12,pulse);
+--				 when "0101" => signal_mux <= (repeat(12,pulse) or triangle) and repeat(12,pulse);
+--				 when "0110" => signal_mux <= (repeat(12,pulse) or sawtooth)  and repeat(12,pulse);
+--				 when "0111" => signal_mux <= (repeat(12,pulse) or sawtooth or triangle)  and repeat(12,pulse);
+--				 when "1000" => signal_mux <= noise;
+--				 when others => signal_mux <= triangle or sawtooth or repeat(12,pulse) or noise;
+--				end case; 
+--			end if;
+--		end if;
+--	end process;
 
 	
 	
@@ -585,11 +623,11 @@ begin
 				exp_table_value	<= 0;
 			else
 				case CONV_INTEGER(env_counter) is
-					when   0 to  51 =>	exp_table_value <= divider_value * 16;
-					when  52 to 101 =>	exp_table_value <= divider_value * 8;
-					when 102 to 152 =>	exp_table_value <= divider_value * 4;
-					when 153 to 203 =>	exp_table_value <= divider_value * 2;
-					when 204 to 255 =>	exp_table_value <= divider_value;
+					when   0 to  51 =>	exp_table_value <= divider_value * 32;
+					when  52 to 101 =>	exp_table_value <= divider_value * 16;
+					when 102 to 152 =>	exp_table_value <= divider_value * 8;
+					when 153 to 203 =>	exp_table_value <= divider_value * 4;
+					when 204 to 255 =>	exp_table_value <= divider_value * 2;
 					when others			=>	exp_table_value <= divider_value;
 				end case;
 			end if;

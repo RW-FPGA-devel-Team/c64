@@ -1,20 +1,44 @@
 --
--- (C) Alvaro Lopes <alvieboy@alvie.com> All Rights Reserved
--- Some changes rampa@encomix.org
---
+-- (C) Alvaro Lopes <alvieboy@alvie.com>
+-- 
+--   The FreeBSD license
+-- 
+--   Redistribution and use in source and binary forms, with or without
+--   modification, are permitted provided that the following conditions
+--   are met:
+-- 
+--   1. Redistributions of source code must retain the above copyright
+--      notice, this list of conditions and the following disclaimer.
+--   2. Redistributions in binary form must reproduce the above
+--      copyright notice, this list of conditions and the following
+--      disclaimer in the documentation and/or other materials
+--      provided with the distribution.
+-- 
+--   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
+--   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+--   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+--   PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+--   ZPUINO PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+--   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+--   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+--   OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+--   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+--   STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+--   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+--   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.--
 library ieee;
-	use ieee.std_logic_1164.all;
-	use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-entity sid8580_filters is
+entity sid_filters_6581 is
 port (
 	clk         : in  std_logic; -- At least 12Mhz
 	rst         : in  std_logic;
 	-- SID registers.
-	Fc_lo       : in  std_logic_vector(7 downto 0);
-	Fc_hi       : in  std_logic_vector(7 downto 0);
-	Res_Filt    : in  std_logic_vector(7 downto 0);
-	Mode_Vol    : in  std_logic_vector(7 downto 0);
+	Fc_lo       : in  unsigned(7 downto 0);
+	Fc_hi       : in  unsigned(7 downto 0);
+	Res_Filt    : in  unsigned(7 downto 0);
+	Mode_Vol    : in  unsigned(7 downto 0);
 	-- Voices - resampled to 13 bit
 	voice1      : in  signed(12 downto 0);
 	voice2      : in  signed(12 downto 0);
@@ -28,15 +52,15 @@ port (
 );
 end entity;
 
-architecture beh of sid8580_filters is
+architecture beh of sid_filters_6581 is
 
-	alias filt        : std_logic_vector(3 downto 0) is Res_Filt(3 downto 0);
-	alias res         : std_logic_vector(3 downto 0) is Res_Filt(7 downto 4);
-	alias volume      : std_logic_vector(3 downto 0) is Mode_Vol(3 downto 0);
-	alias hp_bp_lp    : std_logic_vector(2 downto 0) is Mode_Vol(6 downto 4);
+	alias filt        : unsigned(3 downto 0) is Res_Filt(3 downto 0);
+	alias res         : unsigned(3 downto 0) is Res_Filt(7 downto 4);
+	alias volume      : unsigned(3 downto 0) is Mode_Vol(3 downto 0);
+	alias hp_bp_lp    : unsigned(2 downto 0) is Mode_Vol(6 downto 4);
 	alias voice3off   : std_logic is Mode_Vol(7);
 
-	constant mixer_DC : integer :=  -413; -- NOTE to self: this might be wrong.
+	constant mixer_DC : integer := -475; -- NOTE to self: this might be wrong.
 
 	type regs_type is record
 		Vhp   : signed(17 downto 0);
@@ -55,11 +79,11 @@ architecture beh of sid8580_filters is
 	end record;
 
 	signal addr : integer range 0 to 2047;
-	signal val  : std_logic_vector(15 downto 0);
+	signal val  : unsigned(15 downto 0);
 
 	type divmul_t is array(0 to 15) of integer;
 	constant divmul: divmul_t := (
-		1448, 1328, 1218, 1117, 1024, 939, 861, 790, 724, 664, 609, 558, 512, 470, 431, 395
+		1448, 1323, 1218, 1128, 1051, 984, 925, 872, 825, 783, 745, 710, 679, 650, 624, 599
 	);
 
 	signal r : regs_type;
@@ -74,7 +98,7 @@ architecture beh of sid8580_filters is
 		return a(12)&a(12)&a(12)&a(12)&a(12)&a;
 	end function;
 
-	signal fc : std_logic_vector(10 downto 0);
+	signal fc : unsigned(10 downto 0);
 
 begin
 
@@ -160,7 +184,7 @@ begin
 				w.state := 5;
 				-- 4th accumulation
 				if filt(3)='1' then
-					w.vi := r.vi +   s13_to_18(ext_in);
+					w.vi := r.vi + s13_to_18(ext_in);
 				else
 					w.vnf := r.vnf + s13_to_18(ext_in);
 				end if;
@@ -209,7 +233,6 @@ begin
 			when 10 =>
 				w.state := 11;
 				-- Add mixer DC
-				
 				w.Vf := r.Vf + to_signed(mixer_DC, r.Vf'LENGTH);
 
 			when 11 =>
@@ -217,8 +240,6 @@ begin
 				-- Process volume
 				mulen <= '1';
 				mula <= r.Vf;
-				--mula <= r.Vnf - r.Vf;
-			   --mula <= r.Vnf + r.Vi;
 				mulb <= (others => '0');
 				mulb(3 downto 0) <= signed(volume);
 

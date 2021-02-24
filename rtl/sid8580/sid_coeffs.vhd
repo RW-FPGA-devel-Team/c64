@@ -6,13 +6,13 @@ entity sid_coeffs is
 port (
 	clk  : in  std_logic;
 	addr : in  integer range 0 to 2047;
-	val  : out std_logic_vector(15 downto 0)
+	val  : out unsigned(15 downto 0)
 );
 end entity;
 
 architecture beh of sid_coeffs is
 
-	type mtype is array(0 to 2047) of std_logic_vector(15 downto 0);
+	type mtype is array(0 to 2047) of unsigned(15 downto 0);
 
 	constant coef: mtype := (
 		x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5", x"02d5",

@@ -205,9 +205,9 @@ architecture rtl of fpga64_sid_iec is
 	signal bankSwitch: unsigned(2 downto 0);
 	
 	-- SID signals
-	signal sid_do : std_logic_vector(7 downto 0);
-	signal sid_do6581 : std_logic_vector(7 downto 0);
-	signal sid_do8580 : std_logic_vector(7 downto 0);
+	signal sid_do : unsigned(7 downto 0);
+	signal sid_do6581 : unsigned(7 downto 0);
+	signal sid_do8580 : unsigned(7 downto 0);
 	signal second_sid_en: std_logic;
 
 	-- CIA signals
@@ -287,11 +287,11 @@ architecture rtl of fpga64_sid_iec is
 	signal cd4066_sigD  : std_logic_vector(7 downto 0);
 
 	signal clk_1MHz     : std_logic_vector(31 downto 0);
-	signal pot_x        : std_logic_vector(7 downto 0);
-	signal pot_y        : std_logic_vector(7 downto 0);
+	signal pot_x        : unsigned(7 downto 0);
+	signal pot_y        : unsigned(7 downto 0);
 
-	signal audio_6581   : std_logic_vector(17 downto 0);
-	signal audio_8580   : std_logic_vector(17 downto 0);
+	signal audio_6581   : unsigned(17 downto 0);
+	signal audio_8580   : unsigned(17 downto 0);
 	
 	signal sid_data_l  : std_logic_vector(17 downto 0);
 	signal sid_data_r  : std_logic_vector(17 downto 0);
@@ -617,9 +617,9 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	
 	
 	
-	sid_data_l <=   audio_6581 when sid_left='0' else audio_8580 ;
+	sid_data_l <=   std_logic_vector(audio_6581) when (sid_left='0') else std_logic_vector(audio_8580) ;
 						 
-   sid_data_r <=	 audio_6581 when sid_right='0' else audio_8580;
+   sid_data_r <=	 std_logic_vector(audio_6581) when (sid_right='0') else std_logic_vector(audio_8580);
 	                
 
 
@@ -634,9 +634,9 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 								 
 
 						 
---	sid_do <= sid_do6581 when sid_mode(1)='0' else
---	          sid_do8580 when second_sid_en='0' else
---	          sid_do8580;
+	sid_do <= sid_do6581 when sid_left='0' else
+	          sid_do8580 when second_sid_en='0' else
+	          sid_do8580;
 
 	-- CD4066 analogue switch
 	cd4066_sigA <= x"FF" when cia1_pao(7) = '0' else potA_x;
@@ -644,8 +644,8 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 	cd4066_sigC <= x"FF" when cia1_pao(6) = '0' else potB_x;
 	cd4066_sigD <= x"FF" when cia1_pao(6) = '0' else potB_y;
 
-	pot_x <= cd4066_sigA and cd4066_sigC;
-	pot_y <= cd4066_sigB and cd4066_sigD;
+	pot_x <= unsigned(cd4066_sigA and cd4066_sigC);
+	pot_y <= unsigned(cd4066_sigB and cd4066_sigD);
 
    second_sid_en <= '0' when right_addr = '0' else
                     '1' when cpuAddr(11 downto 8) = x"4" and cpuAddr(5) = '1' else -- D420
@@ -658,19 +658,35 @@ div1m: process(clk32)				-- this process devides 32 MHz to 1MHz (for the SID)
 		clk_1MHz => clk_1MHz(31),
 		reset => reset,
       
-		addr => std_logic_vector(cpuAddr(4 downto 0)),
+		addr => cpuAddr(4 downto 0),
 		we => pulseWrRam and phi0_cpu and cs_sid,
-		din => std_logic_vector(cpuDo),
-		dout => sid_do,
+		din => cpuDo,
+		dout => sid_do6581,
       cs => cs_sid,
 		
 		pot_x => pot_x,
 		pot_y => pot_y,
 
-		audio_6581 => audio_6581,
-		audio_8580 => audio_8580
+		audio_6581 => audio_6581
 	);
 
+	sid_8580: entity work.sid8580
+	port map (
+		clk32 => clk32,
+		clk_1MHz => clk_1MHz(31),
+		reset => reset,
+      
+		addr => cpuAddr(4 downto 0),
+		we => pulseWrRam and phi0_cpu and cs_sid,
+		din => cpuDo,
+		dout => sid_do8580,
+      cs => cs_sid,
+		
+		pot_x => pot_x,
+		pot_y => pot_y,
+
+		audio_8580 => audio_8580
+	);
 
 	
 	Digi : DigiMax

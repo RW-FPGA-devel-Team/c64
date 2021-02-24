@@ -145,7 +145,7 @@ begin
 	-- use the register value to fill the variable
 	pulsewidth 	<= Pw_hi & Pw_lo;
 	--
-	voice							<= signal_vol(15 downto 4);
+	voice							<= signal_vol(19 downto 8);
 
 	-- Phase accumulator :
 	-- "As I recall, the Oscillator is a 24-bit phase-accumulating design of which

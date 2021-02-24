@@ -351,16 +351,8 @@ set_location_assignment PLL_1 -to pll|altpll_component|auto_generated|pll1
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to UART_TX
 
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to UART_RX
+set_global_assignment -name QIP_FILE rtl/rw_sid/rw_sid.qip
 set_global_assignment -name VHDL_FILE rtl/fpga64_rgbcolor.vhd
-set_global_assignment -name VERILOG_FILE rtl/sid6581/sid_tables.v
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_voice_8580.vhd
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_voice_6501.vhd
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_filters_6581.vhd
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_filters_8580.vhd
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_filters.vhd
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_components.vhd
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_coeffs.vhd
-set_global_assignment -name VHDL_FILE rtl/sid6581/sid_6581.vhd
 set_global_assignment -name VERILOG_FILE rtl/DigiMax.v
 set_global_assignment -name VERILOG_FILE rtl/misc/LPFilter.v
 set_global_assignment -name VHDL_FILE build_id.vhd

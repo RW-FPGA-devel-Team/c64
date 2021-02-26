@@ -349,7 +349,7 @@ set_location_assignment PLL_1 -to pll|altpll_component|auto_generated|pll1
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to UART_TX
 
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to UART_RX
-set_global_assignment -name QIP_FILE rtl/rw_sid/rw_sid.qip
+set_global_assignment -name QIP_FILE rtl/cbm_sid/rw_sid.qip
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/mist/compressor.sv
 set_global_assignment -name VERILOG_FILE rtl/misc/LPFilter.v
 set_global_assignment -name VHDL_FILE build_id.vhd
